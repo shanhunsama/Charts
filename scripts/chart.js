@@ -91,6 +91,7 @@ class LocalChart {
         ctx.lineWidth = 3;
         ctx.fillStyle = '#4ecdc4';
         
+        // 先绘制折线
         ctx.beginPath();
         this.data.forEach((value, index) => {
             const x = padding + (index / (this.data.length - 1)) * chartWidth;
@@ -101,6 +102,13 @@ class LocalChart {
             } else {
                 ctx.lineTo(x, y);
             }
+        });
+        ctx.stroke();
+        
+        // 然后绘制数据点
+        this.data.forEach((value, index) => {
+            const x = padding + (index / (this.data.length - 1)) * chartWidth;
+            const y = height - padding - (value / maxValue) * chartHeight;
             
             // 绘制数据点
             ctx.beginPath();
@@ -114,7 +122,6 @@ class LocalChart {
             ctx.fillText(this.labels[index], x, height - padding + 25);
             ctx.fillText(value, x, y - 15);
         });
-        ctx.stroke();
     }
     
     drawBarChart(width, height) {
