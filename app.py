@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
+import os
 import random
 
 app = Flask(__name__)
@@ -10,8 +11,17 @@ current_chart_type = 'line'
 @app.route('/')
 def index():
     """服务HTML页面"""
-    with open('index.html', 'r', encoding='utf-8') as f:
-        return f.read()
+    return send_from_directory('.', 'index.html')
+
+@app.route('/styles/<path:filename>')
+def serve_styles(filename):
+    """服务样式文件"""
+    return send_from_directory('styles', filename)
+
+@app.route('/scripts/<path:filename>')
+def serve_scripts(filename):
+    """服务脚本文件"""
+    return send_from_directory('scripts', filename)
 
 @app.route('/api/update', methods=['POST'])
 def update_data():
@@ -77,4 +87,8 @@ def random_data():
         })
 
 if __name__ == '__main__':
+    # 确保必要的目录存在
+    os.makedirs('styles', exist_ok=True)
+    os.makedirs('scripts', exist_ok=True)
+    
     app.run(debug=True, host='127.0.0.1', port=5000)

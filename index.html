@@ -3,179 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <title>数据图表</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #1a1a1a;
-        }
-        
-        #chartCanvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-    </style>
+    <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
     <canvas id="chartCanvas"></canvas>
+    
+    <!-- 控制面板 -->
+    <div class="control-panel">
+        <!-- 图表类型下拉框 -->
+        <div class="chart-type-selector">
+            <label for="chartType">图表类型</label>
+            <select id="chartType" class="chart-type-dropdown">
+                <option value="line">📈 折线图</option>
+                <option value="bar">📊 柱状图</option>
+                <option value="pie">🥧 饼图</option>
+            </select>
+        </div>
+        
+        <!-- 数据统计面板 -->
+        <div class="data-info-panel">
+            <div class="data-info-header">
+                <h4>
+                    <span>📊</span>
+                    数据统计
+                </h4>
+                <span class="icon">▼</span>
+            </div>
+            <div class="data-info-content">
+                <div class="data-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">数据点:</span>
+                        <span class="stat-value" id="dataPoints">6</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">最大值:</span>
+                        <span class="stat-value" id="maxValue">81</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">最小值:</span>
+                        <span class="stat-value" id="minValue">55</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">平均值:</span>
+                        <span class="stat-value" id="avgValue">66.0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">总和:</span>
+                        <span class="stat-value" id="sumValue">396</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">标准差:</span>
+                        <span class="stat-value" id="stdValue">10.2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 控制按钮 -->
+        <div class="control-buttons">
+            <button class="control-btn" id="randomDataBtn" title="生成随机数据 (Ctrl+R)">随机数据</button>
+            <button class="control-btn" id="exportBtn" title="导出图表为图片 (Ctrl+E)">导出图片</button>
+        </div>
+    </div>
 
-    <script>
-        // 完全本地的图表实现
-        class LocalChart {
-            constructor(canvasId) {
-                this.canvas = document.getElementById(canvasId);
-                this.ctx = this.canvas.getContext('2d');
-                this.chartType = 'line'; // line, bar, pie
-                this.data = [65, 59, 80, 81, 56, 55];
-                this.labels = ['1月', '2月', '3月', '4月', '5月', '6月'];
-                this.colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
-                
-                this.init();
-            }
-            
-            init() {
-                this.resizeCanvas();
-                this.drawChart();
-                
-                // 窗口调整大小
-                window.addEventListener('resize', () => {
-                    this.resizeCanvas();
-                    this.drawChart();
-                });
-                
-                // 双击切换图表类型
-                this.canvas.addEventListener('dblclick', () => {
-                    this.switchChartType();
-                });
-                
-                // 键盘快捷键
-                document.addEventListener('keydown', (e) => {
-                    if (e.ctrlKey) {
-                        e.preventDefault();
-                        if (e.key === '1') this.setChartType('line');
-                        if (e.key === '2') this.setChartType('bar');
-                        if (e.key === '3') this.setChartType('pie');
-                        if (e.key === 'r') this.generateRandomData();
-                    }
-                });
-            }
-            
-            resizeCanvas() {
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
-            }
-            
-            drawChart() {
-                const ctx = this.ctx;
-                const width = this.canvas.width;
-                const height = this.canvas.height;
-                
-                // 清空画布
-                ctx.clearRect(0, 0, width, height);
-                
-                // 绘制黑色背景
-                ctx.fillStyle = '#1a1a1a';
-                ctx.fillRect(0, 0, width, height);
-                
-                switch(this.chartType) {
-                    case 'line':
-                        this.drawLineChart(width, height);
-                        break;
-                    case 'bar':
-                        this.drawBarChart(width, height);
-                        break;
-                    case 'pie':
-                        this.drawPieChart(width, height);
-                        break;
-                }
-            }
-            
-            drawLineChart(width, height) {
-                const ctx = this.ctx;
-                const padding = 80;
-                const chartWidth = width - padding * 2;
-                const chartHeight = height - padding * 2;
-                const maxValue = Math.max(...this.data);
-                
-                // 绘制网格线
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 1;
-                
-                // 水平网格线
-                for (let i = 0; i <= 5; i++) {
-                    const y = padding + (i / 5) * chartHeight;
+    <!-- 工具提示 -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script src="scripts/chart.js"></script>
+    <script src="scripts/controls.js"></script>
+    <script src="scripts/main.js"></script>
+</body>
+</html>
+                    
+                    // 绘制标签线
+                    const labelX = centerX + Math.cos(midAngle) * (radius + 20);
+                    const labelY = centerY + Math.sin(midAngle) * (radius + 20);
+                    
                     ctx.beginPath();
-                    ctx.moveTo(padding, y);
-                    ctx.lineTo(width - padding, y);
+                    ctx.moveTo(centerX + Math.cos(midAngle) * radius, centerY + Math.sin(midAngle) * radius);
+                    ctx.lineTo(labelX, labelY);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                    ctx.lineWidth = 1;
                     ctx.stroke();
-                }
-                
-                // 绘制数据线
-                ctx.strokeStyle = '#4ecdc4';
-                ctx.lineWidth = 3;
-                ctx.fillStyle = '#4ecdc4';
-                
-                ctx.beginPath();
-                this.data.forEach((value, index) => {
-                    const x = padding + (index / (this.data.length - 1)) * chartWidth;
-                    const y = height - padding - (value / maxValue) * chartHeight;
                     
-                    if (index === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                    
-                    // 绘制数据点
-                    ctx.beginPath();
-                    ctx.arc(x, y, 6, 0, Math.PI * 2);
-                    ctx.fill();
-                });
-                ctx.stroke();
-            }
-            
-            drawBarChart(width, height) {
-                const ctx = this.ctx;
-                const padding = 80;
-                const chartWidth = width - padding * 2;
-                const chartHeight = height - padding * 2;
-                const maxValue = Math.max(...this.data);
-                const barWidth = chartWidth / this.data.length * 0.6;
-                
-                // 绘制柱状图
-                this.data.forEach((value, index) => {
-                    const x = padding + (index / this.data.length) * chartWidth + (chartWidth / this.data.length - barWidth) / 2;
-                    const barHeight = (value / maxValue) * chartHeight;
-                    const y = height - padding - barHeight;
-                    
-                    ctx.fillStyle = this.colors[index % this.colors.length];
-                    ctx.fillRect(x, y, barWidth, barHeight);
-                });
-            }
-            
-            drawPieChart(width, height) {
-                const ctx = this.ctx;
-                const centerX = width / 2;
-                const centerY = height / 2;
-                const radius = Math.min(width, height) * 0.3;
-                const total = this.data.reduce((sum, val) => sum + val, 0);
-                
-                let startAngle = 0;
-                
-                this.data.forEach((value, index) => {
-                    const sliceAngle = (value / total) * Math.PI * 2;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(centerX, centerY);
-                    ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
-                    ctx.closePath();
-                    
-                    ctx.fillStyle = this.colors[index % this.colors.length];
-                    ctx.fill();
+                    // 绘制百分比标签
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = Math.cos(midAngle) > 0 ? 'left' : 'right';
+                    ctx.fillText(`${percentage}%`, labelX + (Math.cos(midAngle) > 0 ? 5 : -5), labelY + 4);
                     
                     startAngle += sliceAngle;
                 });
@@ -184,8 +100,11 @@
             switchChartType() {
                 const types = ['line', 'bar', 'pie'];
                 const currentIndex = types.indexOf(this.chartType);
-                this.chartType = types[(currentIndex + 1) % types.length];
-                this.drawChart();
+                const newType = types[(currentIndex + 1) % types.length];
+                this.setChartType(newType);
+                
+                // 更新下拉框
+                document.getElementById('chartType').value = newType;
             }
             
             setChartType(type) {
@@ -198,6 +117,31 @@
             generateRandomData() {
                 this.data = Array.from({length: 6}, () => Math.floor(Math.random() * 100) + 1);
                 this.drawChart();
+            }
+            
+            updateStats() {
+                const maxValue = Math.max(...this.data);
+                const minValue = Math.min(...this.data);
+                const sumValue = this.data.reduce((a, b) => a + b, 0);
+                const avgValue = (sumValue / this.data.length).toFixed(1);
+                
+                // 计算标准差
+                const variance = this.data.reduce((acc, val) => acc + Math.pow(val - avgValue, 2), 0) / this.data.length;
+                const stdValue = Math.sqrt(variance).toFixed(1);
+                
+                document.getElementById('dataPoints').textContent = this.data.length;
+                document.getElementById('maxValue').textContent = maxValue;
+                document.getElementById('minValue').textContent = minValue;
+                document.getElementById('avgValue').textContent = avgValue;
+                document.getElementById('sumValue').textContent = sumValue;
+                document.getElementById('stdValue').textContent = stdValue;
+            }
+            
+            exportChart() {
+                const link = document.createElement('a');
+                link.download = `chart-${this.chartType}-${new Date().getTime()}.png`;
+                link.href = this.canvas.toDataURL();
+                link.click();
             }
             
             // API方法 - 供后端调用
