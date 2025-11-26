@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>数据图表</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #1a1a1a;
+        }
+        
+        #chartCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="chartCanvas"></canvas>
+
+    <script>
+        // 完全本地的图表实现
+        class LocalChart {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.chartType = 'line'; // line, bar, pie
+                this.data = [65, 59, 80, 81, 56, 55];
+                this.labels = ['1月', '2月', '3月', '4月', '5月', '6月'];
+                this.colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+                
+                this.init();
+            }
+            
+            init() {
+                this.resizeCanvas();
+                this.drawChart();
+                
+                // 窗口调整大小
+                window.addEventListener('resize', () => {
+                    this.resizeCanvas();
+                    this.drawChart();
+                });
+                
+                // 双击切换图表类型
+                this.canvas.addEventListener('dblclick', () => {
+                    this.switchChartType();
+                });
+                
+                // 键盘快捷键
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey) {
+                        e.preventDefault();
+                        if (e.key === '1') this.setChartType('line');
+                        if (e.key === '2') this.setChartType('bar');
+                        if (e.key === '3') this.setChartType('pie');
+                        if (e.key === 'r') this.generateRandomData();
+                    }
+                });
+            }
+            
+            resizeCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+            
+            drawChart() {
+                const ctx = this.ctx;
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+                
+                // 清空画布
+                ctx.clearRect(0, 0, width, height);
+                
+                // 绘制黑色背景
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0, 0, width, height);
+                
+                switch(this.chartType) {
+                    case 'line':
+                        this.drawLineChart(width, height);
+                        break;
+                    case 'bar':
+                        this.drawBarChart(width, height);
+                        break;
+                    case 'pie':
+                        this.drawPieChart(width, height);
+                        break;
+                }
+            }
+            
+            drawLineChart(width, height) {
+                const ctx = this.ctx;
+                const padding = 80;
+                const chartWidth = width - padding * 2;
+                const chartHeight = height - padding * 2;
+                const maxValue = Math.max(...this.data);
+                
+                // 绘制网格线
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                
+                // 水平网格线
+                for (let i = 0; i <= 5; i++) {
+                    const y = padding + (i / 5) * chartHeight;
+                    ctx.beginPath();
+                    ctx.moveTo(padding, y);
+                    ctx.lineTo(width - padding, y);
+                    ctx.stroke();
+                }
+                
+                // 绘制数据线
+                ctx.strokeStyle = '#4ecdc4';
+                ctx.lineWidth = 3;
+                ctx.fillStyle = '#4ecdc4';
+                
+                ctx.beginPath();
+                this.data.forEach((value, index) => {
+                    const x = padding + (index / (this.data.length - 1)) * chartWidth;
+                    const y = height - padding - (value / maxValue) * chartHeight;
+                    
+                    if (index === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    
+                    // 绘制数据点
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.stroke();
+            }
+            
+            drawBarChart(width, height) {
+                const ctx = this.ctx;
+                const padding = 80;
+                const chartWidth = width - padding * 2;
+                const chartHeight = height - padding * 2;
+                const maxValue = Math.max(...this.data);
+                const barWidth = chartWidth / this.data.length * 0.6;
+                
+                // 绘制柱状图
+                this.data.forEach((value, index) => {
+                    const x = padding + (index / this.data.length) * chartWidth + (chartWidth / this.data.length - barWidth) / 2;
+                    const barHeight = (value / maxValue) * chartHeight;
+                    const y = height - padding - barHeight;
+                    
+                    ctx.fillStyle = this.colors[index % this.colors.length];
+                    ctx.fillRect(x, y, barWidth, barHeight);
+                });
+            }
+            
+            drawPieChart(width, height) {
+                const ctx = this.ctx;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = Math.min(width, height) * 0.3;
+                const total = this.data.reduce((sum, val) => sum + val, 0);
+                
+                let startAngle = 0;
+                
+                this.data.forEach((value, index) => {
+                    const sliceAngle = (value / total) * Math.PI * 2;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+                    ctx.closePath();
+                    
+                    ctx.fillStyle = this.colors[index % this.colors.length];
+                    ctx.fill();
+                    
+                    startAngle += sliceAngle;
+                });
+            }
+            
+            switchChartType() {
+                const types = ['line', 'bar', 'pie'];
+                const currentIndex = types.indexOf(this.chartType);
+                this.chartType = types[(currentIndex + 1) % types.length];
+                this.drawChart();
+            }
+            
+            setChartType(type) {
+                if (['line', 'bar', 'pie'].includes(type)) {
+                    this.chartType = type;
+                    this.drawChart();
+                }
+            }
+            
+            generateRandomData() {
+                this.data = Array.from({length: 6}, () => Math.floor(Math.random() * 100) + 1);
+                this.drawChart();
+            }
+            
+            // API方法 - 供后端调用
+            updateData(newData) {
+                if (Array.isArray(newData)) {
+                    this.data = newData;
+                    this.drawChart();
+                }
+            }
+            
+            switchType(type) {
+                this.setChartType(type);
+            }
+        }
+        
+        // 初始化图表
+        let chart = new LocalChart('chartCanvas');
+        
+        // 全局函数供后端调用
+        window.updateChart = function(data) {
+            chart.updateData(data);
+        };
+        
+        window.switchChart = function(type) {
+            chart.switchType(type);
+        };
+    </script>
+</body>
+</html>
