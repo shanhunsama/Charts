@@ -117,11 +117,10 @@ class ChartCore {
             ctx.arc(x, y, 6, 0, Math.PI * 2);
             ctx.fill();
             
-            // 绘制标签
+            // 绘制数值标签（只绘制数值，不绘制月份标签）
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(this.labels[index], x, height - padding + 25);
             ctx.fillText(value, x, y - 15);
         });
     }
