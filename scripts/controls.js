@@ -1,7 +1,7 @@
 // 控制逻辑 - 负责用户交互和事件处理
 class ChartControls {
-    constructor(chart) {
-        this.chart = chart;
+    constructor(chartCore) {
+        this.chartCore = chartCore;
         this.tooltip = document.getElementById('tooltip');
     }
     
@@ -16,23 +16,23 @@ class ChartControls {
     initChartTypeControls() {
         // 图表类型下拉框
         const chartTypeSelect = document.getElementById('chartType');
-        chartTypeSelect.value = this.chart.chartType;
+        chartTypeSelect.value = this.chartCore.chartType;
         chartTypeSelect.addEventListener('change', (e) => {
-            this.chart.setChartType(e.target.value);
-            this.chart.updateStats();
+            this.chartCore.setChartType(e.target.value);
+            this.chartCore.updateStats();
         });
     }
     
     initControlButtons() {
         // 随机数据按钮
         document.getElementById('randomDataBtn').addEventListener('click', () => {
-            this.chart.generateRandomData();
-            this.chart.updateStats();
+            this.chartCore.generateRandomData();
+            this.chartCore.updateStats();
         });
         
         // 导出按钮
         document.getElementById('exportBtn').addEventListener('click', () => {
-            this.chart.exportChart();
+            this.chartCore.exportChart();
         });
     }
     
@@ -62,26 +62,26 @@ class ChartControls {
                 e.preventDefault();
                 switch(e.key) {
                     case '1':
-                        this.chart.setChartType('line');
+                        this.chartCore.setChartType('line');
                         document.getElementById('chartType').value = 'line';
-                        this.chart.updateStats();
+                        this.chartCore.updateStats();
                         break;
                     case '2':
-                        this.chart.setChartType('bar');
+                        this.chartCore.setChartType('bar');
                         document.getElementById('chartType').value = 'bar';
-                        this.chart.updateStats();
+                        this.chartCore.updateStats();
                         break;
                     case '3':
-                        this.chart.setChartType('pie');
+                        this.chartCore.setChartType('pie');
                         document.getElementById('chartType').value = 'pie';
-                        this.chart.updateStats();
+                        this.chartCore.updateStats();
                         break;
                     case 'r':
-                        this.chart.generateRandomData();
-                        this.chart.updateStats();
+                        this.chartCore.generateRandomData();
+                        this.chartCore.updateStats();
                         break;
                     case 'e':
-                        this.chart.exportChart();
+                        this.chartCore.exportChart();
                         break;
                 }
             }
@@ -90,10 +90,10 @@ class ChartControls {
     
     initChartInteractions() {
         // 双击切换图表类型
-        this.chart.canvas.addEventListener('dblclick', () => {
-            this.chart.switchChartType();
-            document.getElementById('chartType').value = this.chart.chartType;
-            this.chart.updateStats();
+        this.chartCore.canvas.addEventListener('dblclick', () => {
+            this.chartCore.switchChartType();
+            document.getElementById('chartType').value = this.chartCore.chartType;
+            this.chartCore.updateStats();
         });
     }
     

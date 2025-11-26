@@ -1,18 +1,22 @@
 // 主入口文件 - 应用程序初始化
 class ChartApp {
     constructor() {
-        this.chart = null;
+        this.chartCore = null;
+        this.chartInteraction = null;
         this.controls = null;
     }
     
     init() {
-        // 初始化图表
-        this.chart = new LocalChart('chartCanvas');
-        this.chart.init();
-        this.chart.updateStats();
+        // 初始化图表核心
+        this.chartCore = new ChartCore('chartCanvas');
+        this.chartCore.init();
+        this.chartCore.updateStats();
+        
+        // 初始化交互功能
+        this.chartInteraction = new ChartInteraction(this.chartCore);
         
         // 初始化控制逻辑
-        this.controls = new ChartControls(this.chart);
+        this.controls = new ChartControls(this.chartCore);
         this.controls.init();
         
         // 设置全局API
@@ -24,14 +28,14 @@ class ChartApp {
     setupGlobalAPI() {
         // 全局函数供后端调用
         window.updateChart = (data) => {
-            this.chart.updateData(data);
-            this.chart.updateStats();
+            this.chartCore.updateData(data);
+            this.chartCore.updateStats();
         };
         
         window.switchChart = (type) => {
-            this.chart.switchType(type);
+            this.chartCore.setChartType(type);
             document.getElementById('chartType').value = type;
-            this.chart.updateStats();
+            this.chartCore.updateStats();
         };
     }
 }
