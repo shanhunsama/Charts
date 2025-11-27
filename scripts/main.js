@@ -17,6 +17,7 @@ class ChartApp {
         
         // 初始化控制逻辑
         this.controls = new ChartControls(this.chartCore);
+        this.controls.setChartInteraction(this.chartInteraction); // 设置交互引用
         this.controls.init();
         
         // 设置全局API

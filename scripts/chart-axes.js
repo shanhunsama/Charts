@@ -62,11 +62,11 @@ class ChartAxes {
         ctx.save();
         ctx.translate(padding - 40, height / 2);
         ctx.rotate(-Math.PI / 2);
-        ctx.fillText('数值', 0, 0);
+        //ctx.fillText('数值', 0, 0);
         ctx.restore();
         
         // X轴标题
-        ctx.fillText('月份', width / 2, height - padding + 40);
+        //ctx.fillText('月份', width / 2, height - padding + 40);
     }
     
     // 计算合适的刻度间隔

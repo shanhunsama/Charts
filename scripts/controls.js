@@ -3,6 +3,11 @@ class ChartControls {
     constructor(chartCore) {
         this.chartCore = chartCore;
         this.tooltip = document.getElementById('tooltip');
+        this.chartInteraction = null; // 稍后设置
+    }
+    
+    setChartInteraction(chartInteraction) {
+        this.chartInteraction = chartInteraction;
     }
     
     init() {
@@ -11,8 +16,82 @@ class ChartControls {
         this.initTooltips();
         this.initKeyboardShortcuts();
         this.initChartInteractions();
+        this.initDragControls(); // 初始化拖拽控制
     }
     
+    initDragControls() {
+        // 创建拖拽功能开关
+        this.createDragToggle();
+    }
+    
+    createDragToggle() {
+        // 查找控制面板容器
+        const controlPanel = document.querySelector('.control-panel');
+        if (!controlPanel) return;
+        
+        // 创建拖拽开关容器
+        const dragControlContainer = document.createElement('div');
+        dragControlContainer.className = 'drag-control';
+        
+        // 创建开关标签
+        const label = document.createElement('label');
+        label.textContent = '启用拖拽调整';
+        label.style.cssText = `
+            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            flex: 1;
+        `;
+        
+        // 创建开关按钮
+        const toggle = document.createElement('input');
+        toggle.type = 'checkbox';
+        toggle.checked = true;
+        
+        // 添加切换事件
+        toggle.addEventListener('change', (e) => {
+            if (this.chartInteraction) {
+                this.chartInteraction.toggleDrag(e.target.checked);
+                this.showDragStatus(e.target.checked);
+            }
+        });
+        
+        // 添加到容器
+        dragControlContainer.appendChild(toggle);
+        dragControlContainer.appendChild(label);
+        
+        // 插入到控制面板
+        const chartTypeSelect = document.getElementById('chartType');
+        if (chartTypeSelect && chartTypeSelect.parentNode) {
+            chartTypeSelect.parentNode.insertBefore(dragControlContainer, chartTypeSelect.nextSibling);
+        }
+        
+        // 创建拖拽状态指示器
+        this.createDragStatusIndicator();
+    }
+    
+    createDragStatusIndicator() {
+        const statusIndicator = document.createElement('div');
+        statusIndicator.id = 'dragStatus';
+        statusIndicator.className = 'drag-status hidden';
+        statusIndicator.textContent = '拖拽功能已启用';
+        document.body.appendChild(statusIndicator);
+    }
+    
+    showDragStatus(enabled) {
+        const statusIndicator = document.getElementById('dragStatus');
+        if (!statusIndicator) return;
+        
+        statusIndicator.textContent = enabled ? '拖拽功能已启用' : '拖拽功能已禁用';
+        statusIndicator.className = enabled ? 'drag-status visible' : 'drag-status hidden';
+        
+        // 3秒后自动隐藏
+        setTimeout(() => {
+            statusIndicator.className = 'drag-status hidden';
+        }, 3000);
+    }
     initChartTypeControls() {
         // 图表类型下拉框
         const chartTypeSelect = document.getElementById('chartType');
