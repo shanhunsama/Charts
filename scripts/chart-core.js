@@ -78,13 +78,40 @@ class ChartCore {
         // 绘制坐标轴
         ChartAxes.drawAxes(ctx, width, height, padding, maxValue, this.labels, this.data);
         
-        // 绘制网格线
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        // 绘制渐变背景区域
+        const areaGradient = ctx.createLinearGradient(0, padding, 0, height - padding);
+        areaGradient.addColorStop(0, 'rgba(78, 205, 196, 0.1)');
+        areaGradient.addColorStop(1, 'rgba(69, 183, 209, 0.05)');
+        
+        // 绘制数据区域填充
+        ctx.beginPath();
+        this.data.forEach((value, index) => {
+            const x = padding + (index / (this.data.length - 1)) * chartWidth;
+            const y = height - padding - (value / maxValue) * chartHeight;
+            
+            if (index === 0) {
+                ctx.moveTo(x, height - padding);
+                ctx.lineTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+            
+            if (index === this.data.length - 1) {
+                ctx.lineTo(x, height - padding);
+                ctx.closePath();
+            }
+        });
+        ctx.fillStyle = areaGradient;
+        ctx.fill();
+        
+        // 绘制网格线（更精细）
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
         ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
         
         // 水平网格线
-        for (let i = 0; i <= 5; i++) {
-            const y = padding + (i / 5) * chartHeight;
+        for (let i = 0; i <= 10; i++) {
+            const y = padding + (i / 10) * chartHeight;
             ctx.beginPath();
             ctx.moveTo(padding, y);
             ctx.lineTo(width - padding, y);
@@ -99,17 +126,25 @@ class ChartCore {
             ctx.lineTo(x, height - padding);
             ctx.stroke();
         }
+        ctx.setLineDash([]);
         
-        // 绘制数据线
+        // 绘制数据线（更细的线条，更简洁的样式）
+        ctx.shadowColor = 'rgba(78, 205, 196, 0.2)';
+        ctx.shadowBlur = 5;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
         const lineGradient = ctx.createLinearGradient(0, padding, 0, height - padding);
         lineGradient.addColorStop(0, '#4ecdc4');
-        lineGradient.addColorStop(1, '#45b7d1');
+        lineGradient.addColorStop(0.5, '#45b7d1');
+        lineGradient.addColorStop(1, '#6a89cc');
         
         ctx.strokeStyle = lineGradient;
-        ctx.lineWidth = 3;
-        ctx.fillStyle = '#4ecdc4';
+        ctx.lineWidth = 2; // 更细的线条
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         
-        // 先绘制折线
+        // 绘制折线图（直线连接）
         ctx.beginPath();
         this.data.forEach((value, index) => {
             const x = padding + (index / (this.data.length - 1)) * chartWidth;
@@ -118,27 +153,73 @@ class ChartCore {
             if (index === 0) {
                 ctx.moveTo(x, y);
             } else {
+                // 使用直线连接数据点
                 ctx.lineTo(x, y);
             }
         });
         ctx.stroke();
         
-        // 然后绘制数据点
+        // 重置阴影
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        
+        // 绘制数据点（更简洁的样式）
         this.data.forEach((value, index) => {
             const x = padding + (index / (this.data.length - 1)) * chartWidth;
             const y = height - padding - (value / maxValue) * chartHeight;
             
-            // 绘制数据点
+            // 绘制简洁的数据点
             ctx.beginPath();
-            ctx.arc(x, y, 6, 0, Math.PI * 2);
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
             ctx.fill();
             
-            // 绘制数值标签（只绘制数值，不绘制月份标签）
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.fillStyle = lineGradient;
+            ctx.fill();
+            
+            // 绘制数值标签（简洁样式）
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
             ctx.font = '12px Arial';
             ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
             ctx.fillText(value, x, y - 15);
+            
+            // 绘制月份标签
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.font = '11px Arial';
+            ctx.textBaseline = 'top';
+            ctx.fillText(this.labels[index], x, height - padding + 10);
         });
+        
+        // 绘制趋势线（如果数据点足够多）
+        if (this.data.length >= 3) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            
+            // 简单线性回归计算趋势线
+            const n = this.data.length;
+            const sumX = this.data.reduce((sum, _, i) => sum + i, 0);
+            const sumY = this.data.reduce((sum, val) => sum + val, 0);
+            const sumXY = this.data.reduce((sum, val, i) => sum + i * val, 0);
+            const sumX2 = this.data.reduce((sum, _, i) => sum + i * i, 0);
+            
+            const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+            
+            ctx.beginPath();
+            const startX = padding;
+            const startY = height - padding - (intercept / maxValue) * chartHeight;
+            const endX = width - padding;
+            const endY = height - padding - ((intercept + slope * (n-1)) / maxValue) * chartHeight;
+            
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
     }
     
     drawBarChart(width, height) {

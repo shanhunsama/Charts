@@ -45,13 +45,36 @@ class ChartAxes {
             ctx.fillText(value.toString(), padding - 10, y);
         }
         
-        // 绘制X轴标签（月份）
+        // 绘制X轴标签（月份）- 智能间距处理
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        data.forEach((_, index) => {
-            const x = padding + (index / (data.length - 1)) * chartWidth;
-            ctx.fillText(labels[index], x, height - padding + 10);
-        });
+        ctx.font = '11px Arial';
+        
+        // 计算标签间距，避免重叠
+        const minLabelSpacing = 60; // 最小标签间距（像素）
+        const maxLabels = Math.floor(chartWidth / minLabelSpacing); // 最大可显示的标签数量
+        
+        if (data.length <= maxLabels) {
+            // 数据点数量较少，显示所有标签
+            data.forEach((_, index) => {
+                const x = padding + (index / (data.length - 1)) * chartWidth;
+                ctx.fillText(labels[index], x, height - padding + 10);
+            });
+        } else {
+            // 数据点数量较多，间隔显示标签
+            const step = Math.ceil(data.length / maxLabels);
+            for (let index = 0; index < data.length; index += step) {
+                const x = padding + (index / (data.length - 1)) * chartWidth;
+                ctx.fillText(labels[index], x, height - padding + 10);
+            }
+            
+            // 确保显示最后一个标签
+            if (data.length - 1 % step !== 0) {
+                const lastIndex = data.length - 1;
+                const x = padding + (lastIndex / (data.length - 1)) * chartWidth;
+                ctx.fillText(labels[lastIndex], x, height - padding + 10);
+            }
+        }
         
         // 绘制坐标轴标题
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
