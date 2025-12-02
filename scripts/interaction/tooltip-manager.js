@@ -176,9 +176,6 @@ class TooltipManager {
             <div style="font-weight: bold; margin-bottom: 6px; color: #4CAF50;">${label}</div>
             <div style="margin-bottom: 4px;">数值: <strong>${value}</strong></div>
             <div style="margin-bottom: 4px;">占比: <strong>${percentage}%</strong></div>
-            <div style="font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 4px;">
-                点击并拖拽可调整数值
-            </div>
         `;
     }
     
@@ -189,9 +186,6 @@ class TooltipManager {
             <div style="font-weight: bold; margin-bottom: 6px; color: #2196F3;">${label}</div>
             <div style="margin-bottom: 4px;">数值: <strong>${value}</strong></div>
             <div style="margin-bottom: 4px;">占比: <strong>${percentage}%</strong></div>
-            <div style="font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 4px;">
-                点击并拖拽可调整柱状高度
-            </div>
         `;
     }
     
@@ -203,9 +197,6 @@ class TooltipManager {
             <div style="font-weight: bold; margin-bottom: 6px; color: #FF9800;">${label}</div>
             <div style="margin-bottom: 4px;">数值: <strong>${value}</strong></div>
             <div style="margin-bottom: 4px;">占比: <strong>${percentage}%</strong></div>
-            <div style="font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 4px;">
-                点击并拖拽可调整扇形大小
-            </div>
         `;
     }
     

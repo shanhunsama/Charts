@@ -151,7 +151,6 @@ class LineInteraction extends BaseInteraction {
         tooltip.innerHTML = `
             <div style="font-weight: bold; margin-bottom: 5px;">${label}</div>
             <div>数值: ${value}</div>
-            <div style="font-size: 12px; opacity: 0.8;">点击并拖拽可调整数值</div>
         `;
         
         // 获取数据点位置

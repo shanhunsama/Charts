@@ -15,7 +15,7 @@ body, html {
     display: block;
 }
 
-/* 控制面板容器 */
+/* 控制面板容器 - 可折叠和拖拽 */
 .control-panel {
     position: fixed;
     top: 20px;
@@ -24,17 +24,135 @@ body, html {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    min-width: 200px;
+    width: 250px; /* 固定宽度，不随折叠状态变化 */
+    cursor: grab;
+    opacity: 1;
+    transition: all 0.3s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+.control-panel.collapsed {
+    width: 250px; /* 折叠时保持相同的宽度 */
+    opacity: 0.8;
+}
+
+.control-panel.collapsed:hover {
+    opacity: 1;
+}
+
+.control-panel.dragging {
+    opacity: 0.9;
+    box-shadow: 0 0 0 3px #007bff, 0 8px 30px rgba(0, 0, 0, 0.5);
+    cursor: grabbing;
+    transform: scale(1.02);
+    transition: none;
+}
+
+/* 折叠按钮 - 固定在右侧 */
+.collapse-toggle {
+    position: absolute;
+    top: -30px;
+    right: 10px; /* 固定在右侧，不依赖面板宽度 */
+    z-index: 1001;
+}
+
+.collapse-btn {
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.collapse-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.control-panel.collapsed .collapse-btn {
+    transform: rotate(180deg);
+}
+
+.control-panel.collapsed .collapse-btn:hover {
+    transform: rotate(180deg) scale(1.1);
+}
+
+/* 面板内容 */
+.panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.3s ease;
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: top;
+    height: auto; /* 正常高度 */
+    overflow: visible;
+}
+
+.control-panel.collapsed .panel-content {
+    opacity: 0;
+    transform: scaleY(0);
+    height: 0; /* 折叠时高度为0 */
+    overflow: hidden;
+    pointer-events: none;
 }
 
 /* 图表类型下拉框 */
 .chart-type-selector {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.98); /* 增加不透明度 */
     border-radius: 12px;
     padding: 15px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.control-panel:hover .chart-type-selector {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* 数据统计面板 */
+.data-info-panel {
+    background: rgba(255, 255, 255, 0.98); /* 增加不透明度 */
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    max-height: 50px;
+}
+
+.control-panel:hover .data-info-panel {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+}
+
+.data-info-panel:hover {
+    max-height: 200px;
+}
+
+/* 控制按钮组 */
+.control-buttons {
+    display: flex;
+    gap: 8px;
+    opacity: 0.9; /* 增加按钮不透明度 */
+    transition: opacity 0.3s ease;
+}
+
+.control-panel:hover .control-buttons {
+    opacity: 1;
 }
 
 .chart-type-selector label {

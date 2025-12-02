@@ -10,59 +10,67 @@
     
     <!-- 控制面板 -->
     <div class="control-panel">
-        <!-- 图表类型下拉框 -->
-        <div class="chart-type-selector">
-            <label for="chartType">图表类型</label>
-            <select id="chartType" class="chart-type-dropdown">
-                <option value="line">📈 折线图</option>
-                <option value="bar">📊 柱状图</option>
-                <option value="pie">🥧 饼图</option>
-            </select>
+        <!-- 折叠按钮 -->
+        <div class="collapse-toggle">
+            <button class="collapse-btn" id="collapseBtn" title="折叠/展开控制面板">⚙️</button>
         </div>
         
-        <!-- 数据统计面板 -->
-        <div class="data-info-panel">
-            <div class="data-info-header">
-                <h4>
-                    <span>📊</span>
-                    数据统计
-                </h4>
-                <span class="icon">▼</span>
+        <!-- 控制面板内容 -->
+        <div class="panel-content">
+            <!-- 图表类型下拉框 -->
+            <div class="chart-type-selector">
+                <label for="chartType">图表类型</label>
+                <select id="chartType" class="chart-type-dropdown">
+                    <option value="line">📈 折线图</option>
+                    <option value="bar">📊 柱状图</option>
+                    <option value="pie">🥧 饼图</option>
+                </select>
             </div>
-            <div class="data-info-content">
-                <div class="data-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">数据点:</span>
-                        <span class="stat-value" id="dataPoints">6</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">最大值:</span>
-                        <span class="stat-value" id="maxValue">81</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">最小值:</span>
-                        <span class="stat-value" id="minValue">55</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">平均值:</span>
-                        <span class="stat-value" id="avgValue">66.0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">总和:</span>
-                        <span class="stat-value" id="sumValue">396</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">标准差:</span>
-                        <span class="stat-value" id="stdValue">10.2</span>
+            
+            <!-- 数据统计面板 -->
+            <div class="data-info-panel">
+                <div class="data-info-header">
+                    <h4>
+                        <span>📊</span>
+                        数据统计
+                    </h4>
+                    <span class="icon">▼</span>
+                </div>
+                <div class="data-info-content">
+                    <div class="data-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">数据点:</span>
+                            <span class="stat-value" id="dataPoints">6</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">最大值:</span>
+                            <span class="stat-value" id="maxValue">81</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">最小值:</span>
+                            <span class="stat-value" id="minValue">55</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">平均值:</span>
+                            <span class="stat-value" id="avgValue">66.0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">总和:</span>
+                            <span class="stat-value" id="sumValue">396</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">标准差:</span>
+                            <span class="stat-value" id="stdValue">10.2</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- 控制按钮 -->
-        <div class="control-buttons">
-            <button class="control-btn" id="randomDataBtn" title="生成随机数据 (Ctrl+R)">随机数据</button>
-            <button class="control-btn" id="exportBtn" title="导出图表为图片 (Ctrl+E)">导出图片</button>
+            
+            <!-- 控制按钮 -->
+            <div class="control-buttons">
+                <button class="control-btn" id="randomDataBtn" title="生成随机数据 (Ctrl+R)">随机数据</button>
+                <button class="control-btn" id="exportBtn" title="导出图表为图片 (Ctrl+E)">导出图片</button>
+            </div>
         </div>
     </div>
 
