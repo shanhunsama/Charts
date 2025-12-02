@@ -4,8 +4,8 @@ class ChartCore {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.chartType = 'line';
-        this.data = [65, 59, 80, 81, 56, 55];
-        this.labels = ['1月', '2月', '3月', '4月', '5月', '6月'];
+        this.data = [65, 59, 80, 81, 56, 55,56, 40, 72, 65, 59, 80, 81, 56, 55];
+        this.labels = ['2025.11.1', '2025.11.2', '2025.11.3', '2025.11.4', '2025.11.5', '2025.11.6', '2025.11.7', '2025.11.8', '2025.11.9', '2025.11.10', '2025.11.11', '2025.11.12', '2025.11.13', '2025.11.14', '2025.11.15'];
         this.colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
         this.chartInteraction = null; // 交互引用
     }
