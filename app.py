@@ -7,8 +7,6 @@ app = Flask(__name__)
 # 当前数据状态
 current_data = [65, 59, 80, 81, 56, 55]
 current_chart_type = 'line'
-# 拖拽功能开关 - 默认为启用
-drag_enabled = True
 
 @app.route('/')
 def index():
@@ -31,33 +29,10 @@ def get_config():
     return jsonify({
         'success': True,
         'config': {
-            'drag_enabled': drag_enabled,
             'chart_type': current_chart_type,
             'data': current_data
         }
     })
-
-@app.route('/api/config/drag', methods=['POST'])
-def toggle_drag():
-    """切换拖拽功能开关"""
-    global drag_enabled
-    
-    try:
-        data = request.get_json()
-        enabled = data.get('enabled')
-        
-        if enabled is not None:
-            drag_enabled = bool(enabled)
-        
-        return jsonify({
-            'success': True,
-            'drag_enabled': drag_enabled
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        })
 
 @app.route('/api/update', methods=['POST'])
 def update_data():
@@ -110,7 +85,7 @@ def random_data():
     global current_data
     
     try:
-        current_data = [random.randint(10, 100) for _ in range(6)]
+        current_data = [random.randint(-100, 100) for _ in range(20)]
         
         return jsonify({
             'success': True,

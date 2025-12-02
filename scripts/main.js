@@ -12,12 +12,11 @@ class ChartApp {
         this.chartCore.init();
         this.chartCore.updateStats();
         
-        // 初始化交互功能
+        // 初始化交互功能（使用重构后的类）
         this.chartInteraction = new ChartInteraction(this.chartCore);
         
         // 初始化控制逻辑
         this.controls = new ChartControls(this.chartCore);
-        this.controls.setChartInteraction(this.chartInteraction); // 设置交互引用
         this.controls.init();
         
         // 设置全局API
@@ -35,6 +34,7 @@ class ChartApp {
         
         window.switchChart = (type) => {
             this.chartCore.setChartType(type);
+            this.chartInteraction.switchChartType(type); // 通知交互管理器切换
             document.getElementById('chartType').value = type;
             this.chartCore.updateStats();
         };

@@ -7,6 +7,22 @@ class ChartCore {
         this.data = [65, 59, 80, 81, 56, 55];
         this.labels = ['1月', '2月', '3月', '4月', '5月', '6月'];
         this.colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+        this.chartInteraction = null; // 交互引用
+    }
+    
+    setChartInteraction(chartInteraction) {
+        this.chartInteraction = chartInteraction;
+    }
+    
+    setChartType(type) {
+        if (['line', 'bar', 'pie'].includes(type)) {
+            this.chartType = type;
+            // 通知交互管理器切换交互类型
+            if (this.chartInteraction) {
+                this.chartInteraction.switchChartType(type);
+            }
+            this.drawChart();
+        }
     }
     
     init() {

@@ -73,105 +73,17 @@
     <script src="scripts/chart-utils.js"></script>
     <script src="scripts/chart-axes.js"></script>
     <script src="scripts/chart-core.js"></script>
+    
+    <!-- 重构后的交互模块 -->
+    <script src="scripts/interaction/base-interaction.js"></script>
+    <script src="scripts/interaction/line-interaction.js"></script>
+    <script src="scripts/interaction/bar-interaction.js"></script>
+    <script src="scripts/interaction/pie-interaction.js"></script>
+    <script src="scripts/interaction/tooltip-manager.js"></script>
+    <script src="scripts/interaction/interaction-manager.js"></script>
     <script src="scripts/chart-interaction.js"></script>
+    
     <script src="scripts/controls.js"></script>
     <script src="scripts/main.js"></script>
-</body>
-</html>
-                    
-                    // 绘制标签线
-                    const labelX = centerX + Math.cos(midAngle) * (radius + 20);
-                    const labelY = centerY + Math.sin(midAngle) * (radius + 20);
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(centerX + Math.cos(midAngle) * radius, centerY + Math.sin(midAngle) * radius);
-                    ctx.lineTo(labelX, labelY);
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                    
-                    // 绘制百分比标签
-                    const percentage = ((value / total) * 100).toFixed(1);
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                    ctx.font = '12px Arial';
-                    ctx.textAlign = Math.cos(midAngle) > 0 ? 'left' : 'right';
-                    ctx.fillText(`${percentage}%`, labelX + (Math.cos(midAngle) > 0 ? 5 : -5), labelY + 4);
-                    
-                    startAngle += sliceAngle;
-                });
-            }
-            
-            switchChartType() {
-                const types = ['line', 'bar', 'pie'];
-                const currentIndex = types.indexOf(this.chartType);
-                const newType = types[(currentIndex + 1) % types.length];
-                this.setChartType(newType);
-                
-                // 更新下拉框
-                document.getElementById('chartType').value = newType;
-            }
-            
-            setChartType(type) {
-                if (['line', 'bar', 'pie'].includes(type)) {
-                    this.chartType = type;
-                    this.drawChart();
-                }
-            }
-            
-            generateRandomData() {
-                this.data = Array.from({length: 6}, () => Math.floor(Math.random() * 100) + 1);
-                this.drawChart();
-            }
-            
-            updateStats() {
-                const maxValue = Math.max(...this.data);
-                const minValue = Math.min(...this.data);
-                const sumValue = this.data.reduce((a, b) => a + b, 0);
-                const avgValue = (sumValue / this.data.length).toFixed(1);
-                
-                // 计算标准差
-                const variance = this.data.reduce((acc, val) => acc + Math.pow(val - avgValue, 2), 0) / this.data.length;
-                const stdValue = Math.sqrt(variance).toFixed(1);
-                
-                document.getElementById('dataPoints').textContent = this.data.length;
-                document.getElementById('maxValue').textContent = maxValue;
-                document.getElementById('minValue').textContent = minValue;
-                document.getElementById('avgValue').textContent = avgValue;
-                document.getElementById('sumValue').textContent = sumValue;
-                document.getElementById('stdValue').textContent = stdValue;
-            }
-            
-            exportChart() {
-                const link = document.createElement('a');
-                link.download = `chart-${this.chartType}-${new Date().getTime()}.png`;
-                link.href = this.canvas.toDataURL();
-                link.click();
-            }
-            
-            // API方法 - 供后端调用
-            updateData(newData) {
-                if (Array.isArray(newData)) {
-                    this.data = newData;
-                    this.drawChart();
-                }
-            }
-            
-            switchType(type) {
-                this.setChartType(type);
-            }
-        }
-        
-        // 初始化图表
-        let chart = new LocalChart('chartCanvas');
-        
-        // 全局函数供后端调用
-        window.updateChart = function(data) {
-            chart.updateData(data);
-        };
-        
-        window.switchChart = function(type) {
-            chart.switchType(type);
-        };
-    </script>
 </body>
 </html>
