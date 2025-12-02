@@ -4,8 +4,11 @@ import random
 
 app = Flask(__name__)
 
-# 当前数据状态
-current_data = [65, 59, 80, 81, 56, 55]
+# 当前数据状态 - 修改为支持键值对数据
+current_data = {
+    'values': [65, 59, 80, 81, 56, 55],
+    'labels': ['1月', '2月', '3月', '4月', '5月', '6月']
+}
 current_chart_type = 'line'
 
 @app.route('/')
@@ -36,15 +39,37 @@ def get_config():
 
 @app.route('/api/update', methods=['POST'])
 def update_data():
-    """更新图表数据"""
+    """更新图表数据 - 支持键值对数据"""
     global current_data
     
     try:
         data = request.get_json()
-        new_data = data.get('data', [])
+        new_values = data.get('values', [])
+        new_labels = data.get('labels', [])
         
-        if new_data:
-            current_data = new_data
+        # 验证数据格式
+        if new_values and new_labels:
+            if len(new_values) != len(new_labels):
+                return jsonify({
+                    'success': False,
+                    'error': 'values和labels数组长度必须一致'
+                })
+            
+            current_data = {
+                'values': new_values,
+                'labels': new_labels
+            }
+        elif new_values:
+            # 如果只提供了values，使用默认标签
+            current_data = {
+                'values': new_values,
+                'labels': [f'数据{i+1}' for i in range(len(new_values))]
+            }
+        else:
+            return jsonify({
+                'success': False,
+                'error': '必须提供values数据'
+            })
         
         return jsonify({
             'success': True,
@@ -81,11 +106,18 @@ def switch_chart():
 
 @app.route('/api/random', methods=['POST'])
 def random_data():
-    """生成随机数据"""
+    """生成随机数据 - 更新为支持键值对格式"""
     global current_data
     
     try:
-        current_data = [random.randint(-100, 100) for _ in range(20)]
+        # 生成随机数据和标签
+        values = [random.randint(-100, 100) for _ in range(6)]
+        labels = [f'第{i+1}季度' for i in range(6)]
+        
+        current_data = {
+            'values': values,
+            'labels': labels
+        }
         
         return jsonify({
             'success': True,

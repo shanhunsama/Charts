@@ -30,7 +30,7 @@ class ChartControls {
     }
     
     initControlButtons() {
-        // 随机数据按钮
+        // 随机数据按钮（修改为生成键值对数据）
         document.getElementById('randomDataBtn').addEventListener('click', () => {
             this.chartCore.generateRandomData();
             this.chartCore.updateStats();

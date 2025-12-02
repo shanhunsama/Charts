@@ -26,7 +26,7 @@ class ChartApp {
     }
     
     setupGlobalAPI() {
-        // 全局函数供后端调用
+        // 全局函数供后端调用（修改为支持键值对数据）
         window.updateChart = (data) => {
             this.chartCore.updateData(data);
             this.chartCore.updateStats();

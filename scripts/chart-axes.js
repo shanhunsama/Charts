@@ -1,7 +1,7 @@
 // 坐标轴系统类
 class ChartAxes {
     // 绘制坐标轴和刻度标记
-    static drawAxes(ctx, width, height, padding, maxValue, labels, data) {
+    static drawAxes(ctx, width, height, padding, maxValue, labels, data, minLabelSpacing = 60) {
         const chartWidth = width - padding * 2;
         const chartHeight = height - padding * 2;
         
@@ -45,13 +45,12 @@ class ChartAxes {
             ctx.fillText(value.toString(), padding - 10, y);
         }
         
-        // 绘制X轴标签（月份）- 完全重写智能间距处理
+        // 绘制X轴标签（月份）- 使用传入的标签间距
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.font = '11px Arial';
         
         // 计算标签间距，避免重叠
-        const minLabelSpacing = 80; // 增加最小标签间距（像素）
         const maxLabels = Math.floor(chartWidth / minLabelSpacing); // 最大可显示的标签数量
         
         // 创建要显示的标签索引数组

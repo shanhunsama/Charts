@@ -4,6 +4,7 @@ class ChartCore {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.chartType = 'line';
+        // 修改为支持键值对数据结构
         this.data = [65, 59, 80, 81, 56, 55,56, 40, 72, 65, 59, 80, 81, 56, 55];
         this.labels = ['2025.11.1', '2025.11.2', '2025.11.3', '2025.11.4', '2025.11.5', '2025.11.6', '2025.11.7', '2025.11.8', '2025.11.9', '2025.11.10', '2025.11.11', '2025.11.12', '2025.11.13', '2025.11.14', '2025.11.15'];
         this.colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
@@ -40,6 +41,42 @@ class ChartCore {
         this.canvas.height = window.innerHeight;
     }
     
+    // 获取屏幕尺寸类别
+    getScreenSize() {
+        const width = this.canvas.width;
+        if (width < 768) return 'small';    // 手机
+        if (width < 1024) return 'medium';  // 平板
+        return 'large';                     // 桌面
+    }
+    
+    // 根据屏幕尺寸获取图表参数
+    getChartParams(screenSize) {
+        const params = {
+            small: {
+                padding: 40,        // 减少边距
+                lineWidth: 1.5,     // 更细的线条
+                pointRadius: 3,     // 更小的数据点
+                fontSize: 10,       // 更小的字体
+                labelSpacing: 100   // 更大的标签间距
+            },
+            medium: {
+                padding: 60,
+                lineWidth: 2,
+                pointRadius: 4,
+                fontSize: 11,
+                labelSpacing: 80
+            },
+            large: {
+                padding: 80,
+                lineWidth: 3,
+                pointRadius: 6,
+                fontSize: 13,
+                labelSpacing: 60
+            }
+        };
+        return params[screenSize] || params.large;
+    }
+    
     drawChart() {
         const ctx = this.ctx;
         const width = this.canvas.width;
@@ -70,13 +107,16 @@ class ChartCore {
     
     drawLineChart(width, height) {
         const ctx = this.ctx;
-        const padding = 80;
+        const screenSize = this.getScreenSize();
+        const params = this.getChartParams(screenSize);
+        
+        const padding = params.padding;
         const chartWidth = width - padding * 2;
         const chartHeight = height - padding * 2;
         const maxValue = Math.max(...this.data);
         
-        // 绘制坐标轴
-        ChartAxes.drawAxes(ctx, width, height, padding, maxValue, this.labels, this.data);
+        // 绘制坐标轴（传递标签间距参数）
+        ChartAxes.drawAxes(ctx, width, height, padding, maxValue, this.labels, this.data, params.labelSpacing);
         
         // 绘制渐变背景区域
         const areaGradient = ctx.createLinearGradient(0, padding, 0, height - padding);
@@ -128,9 +168,9 @@ class ChartCore {
         }
         ctx.setLineDash([]);
         
-        // 绘制数据线（更优雅的样式）
+        // 绘制数据线（响应式线条粗细）
         ctx.shadowColor = 'rgba(78, 205, 196, 0.4)';
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = screenSize === 'small' ? 8 : 15; // 小屏减少阴影
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         
@@ -142,7 +182,7 @@ class ChartCore {
         lineGradient.addColorStop(1, '#6a89cc');    // 蓝色
         
         ctx.strokeStyle = lineGradient;
-        ctx.lineWidth = 3; // 适中的线条粗细
+        ctx.lineWidth = params.lineWidth; // 响应式线条粗细
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         
@@ -165,57 +205,55 @@ class ChartCore {
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
         
-        // 绘制数据点（更优雅的样式）
+        // 绘制数据点（响应式尺寸）
         this.data.forEach((value, index) => {
             const x = padding + (index / (this.data.length - 1)) * chartWidth;
             const y = height - padding - (value / maxValue) * chartHeight;
             
             // 绘制优雅的数据点（带发光效果）
             ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = screenSize === 'small' ? 5 : 10; // 小屏减少阴影
             
-            // 外圈白色光环
+            // 外圈白色光环（响应式尺寸）
             ctx.beginPath();
-            ctx.arc(x, y, 6, 0, Math.PI * 2);
+            ctx.arc(x, y, params.pointRadius, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
             ctx.fill();
             
             // 内圈渐变色彩
             ctx.beginPath();
-            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.arc(x, y, params.pointRadius - 2, 0, Math.PI * 2);
             ctx.fillStyle = lineGradient;
             ctx.fill();
             
-            // 中心高光
-            ctx.beginPath();
-            ctx.arc(x - 1, y - 1, 1.5, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.fill();
+            // 中心高光（小屏可省略）
+            if (screenSize !== 'small') {
+                ctx.beginPath();
+                ctx.arc(x - 1, y - 1, 1, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fill();
+            }
             
             ctx.shadowColor = 'transparent';
             ctx.shadowBlur = 0;
             
-            // 绘制数值标签（优雅样式）
+            // 绘制数值标签（响应式字体）
             ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-            ctx.font = 'bold 13px "Segoe UI", Arial, sans-serif';
+            ctx.font = `bold ${params.fontSize}px "Segoe UI", Arial, sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
             
-            // 添加微妙的标签背景
-            const textWidth = ctx.measureText(value).width;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-            ctx.fillRect(x - textWidth/2 - 6, y - 32, textWidth + 12, 22);
+            // 添加微妙的标签背景（小屏可省略）
+            if (screenSize !== 'small') {
+                const textWidth = ctx.measureText(value).width;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                ctx.fillRect(x - textWidth/2 - 6, y - 32, textWidth + 12, 22);
+            }
             
             // 绘制标签文本
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 13px "Segoe UI", Arial, sans-serif';
+            ctx.font = `bold ${params.fontSize}px "Segoe UI", Arial, sans-serif`;
             ctx.fillText(value, x, y - 18);
-            
-            // 删除重复的月份标签绘制代码
-            // ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            // ctx.font = '12px "Segoe UI", Arial, sans-serif';
-            // ctx.textBaseline = 'top';
-            // ctx.fillText(this.labels[index], x, height - padding + 12);
         });
         
         // 绘制趋势线（如果数据点足够多）
@@ -351,8 +389,11 @@ class ChartCore {
     }
     
     generateRandomData() {
-        this.data = Array.from({length: 6}, () => Math.floor(Math.random() * 100) + 1);
-        this.drawChart();
+        // 修改为生成键值对数据
+        const values = Array.from({length: 6}, () => Math.floor(Math.random() * 100) + 1);
+        const labels = ['第一季度', '第二季度', '第三季度', '第四季度', '第五季度', '第六季度'];
+        
+        this.updateDataWithLabels({ values, labels });
     }
     
     updateStats() {
@@ -380,11 +421,33 @@ class ChartCore {
         link.click();
     }
     
-    // API方法 - 供后端调用
+    // API方法 - 供后端调用（修改为支持键值对数据）
     updateData(newData) {
-        if (Array.isArray(newData)) {
+        if (typeof newData === 'object' && newData.values && newData.labels) {
+            // 处理键值对数据
+            this.updateDataWithLabels(newData);
+        } else if (Array.isArray(newData)) {
+            // 向后兼容：处理纯数组数据
             this.data = newData;
+            // 生成默认标签
+            this.labels = newData.map((_, index) => `数据${index + 1}`);
             this.drawChart();
+            this.updateStats();
+        }
+    }
+    
+    // 新增方法：使用键值对数据更新图表
+    updateDataWithLabels(dataObj) {
+        if (dataObj.values && dataObj.labels) {
+            if (dataObj.values.length !== dataObj.labels.length) {
+                console.error('数据值和标签数量不一致');
+                return;
+            }
+            
+            this.data = dataObj.values;
+            this.labels = dataObj.labels;
+            this.drawChart();
+            this.updateStats();
         }
     }
     
