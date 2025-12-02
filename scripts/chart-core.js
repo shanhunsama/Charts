@@ -128,19 +128,21 @@ class ChartCore {
         }
         ctx.setLineDash([]);
         
-        // 绘制数据线（更细的线条，更简洁的样式）
-        ctx.shadowColor = 'rgba(78, 205, 196, 0.2)';
-        ctx.shadowBlur = 5;
+        // 绘制数据线（更优雅的样式）
+        ctx.shadowColor = 'rgba(78, 205, 196, 0.4)';
+        ctx.shadowBlur = 15;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         
+        // 更优雅的渐变色彩
         const lineGradient = ctx.createLinearGradient(0, padding, 0, height - padding);
-        lineGradient.addColorStop(0, '#4ecdc4');
-        lineGradient.addColorStop(0.5, '#45b7d1');
-        lineGradient.addColorStop(1, '#6a89cc');
+        lineGradient.addColorStop(0, '#6a89cc');    // 蓝色
+        lineGradient.addColorStop(0.3, '#4ecdc4');   // 青色
+        lineGradient.addColorStop(0.7, '#45b7d1');  // 天蓝
+        lineGradient.addColorStop(1, '#6a89cc');    // 蓝色
         
         ctx.strokeStyle = lineGradient;
-        ctx.lineWidth = 2; // 更细的线条
+        ctx.lineWidth = 3; // 适中的线条粗细
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         
@@ -163,34 +165,57 @@ class ChartCore {
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
         
-        // 绘制数据点（更简洁的样式）
+        // 绘制数据点（更优雅的样式）
         this.data.forEach((value, index) => {
             const x = padding + (index / (this.data.length - 1)) * chartWidth;
             const y = height - padding - (value / maxValue) * chartHeight;
             
-            // 绘制简洁的数据点
+            // 绘制优雅的数据点（带发光效果）
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
+            ctx.shadowBlur = 10;
+            
+            // 外圈白色光环
             ctx.beginPath();
-            ctx.arc(x, y, 4, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffffff';
+            ctx.arc(x, y, 6, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
             ctx.fill();
             
+            // 内圈渐变色彩
             ctx.beginPath();
-            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
             ctx.fillStyle = lineGradient;
             ctx.fill();
             
-            // 绘制数值标签（简洁样式）
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.font = '12px Arial';
+            // 中心高光
+            ctx.beginPath();
+            ctx.arc(x - 1, y - 1, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.fill();
+            
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            
+            // 绘制数值标签（优雅样式）
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.font = 'bold 13px "Segoe UI", Arial, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
-            ctx.fillText(value, x, y - 15);
             
-            // 绘制月份标签
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.font = '11px Arial';
-            ctx.textBaseline = 'top';
-            ctx.fillText(this.labels[index], x, height - padding + 10);
+            // 添加微妙的标签背景
+            const textWidth = ctx.measureText(value).width;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.fillRect(x - textWidth/2 - 6, y - 32, textWidth + 12, 22);
+            
+            // 绘制标签文本
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 13px "Segoe UI", Arial, sans-serif';
+            ctx.fillText(value, x, y - 18);
+            
+            // 删除重复的月份标签绘制代码
+            // ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            // ctx.font = '12px "Segoe UI", Arial, sans-serif';
+            // ctx.textBaseline = 'top';
+            // ctx.fillText(this.labels[index], x, height - padding + 12);
         });
         
         // 绘制趋势线（如果数据点足够多）
