@@ -31,27 +31,8 @@ class LineInteraction extends BaseInteraction {
         return height - padding - (value / maxValue) * chartHeight;
     }
     
-    handleDataPointDrag(mouseX, mouseY) {
-        const padding = 80;
-        const height = this.chartCore.canvas.height;
-        const chartHeight = height - padding * 2;
-        const maxValue = Math.max(...this.chartCore.data);
-        
-        // 计算新的数值
-        const newValue = Math.max(0, Math.min(100, 
-            ((height - padding - mouseY) / chartHeight) * maxValue
-        ));
-        
-        // 更新数据
-        this.chartCore.data[this.selectedIndex] = Math.round(newValue);
-        this.chartCore.updateStats();
-        this.chartCore.drawChart();
-        this.drawInteractions();
-    }
-    
     drawInteractions() {
         this.drawHoverEffects();
-        this.drawSelectionEffects();
     }
     
     drawHoverEffects() {
@@ -83,44 +64,6 @@ class LineInteraction extends BaseInteraction {
             ctx.setLineDash([5, 5]);
             ctx.stroke();
             ctx.setLineDash([]);
-        }
-    }
-    
-    drawSelectionEffects() {
-        if (this.selectedIndex >= 0) {
-            const ctx = this.chartCore.ctx;
-            const width = this.chartCore.canvas.width;
-            const height = this.chartCore.canvas.height;
-            const padding = 80;
-            const chartWidth = width - padding * 2;
-            const chartHeight = height - padding * 2;
-            const maxValue = Math.max(...this.chartCore.data);
-            
-            const x = padding + (this.selectedIndex / (this.chartCore.data.length - 1)) * chartWidth;
-            const y = height - padding - (this.chartCore.data[this.selectedIndex] / maxValue) * chartHeight;
-            
-            // 绘制选中圆圈
-            ctx.beginPath();
-            ctx.arc(x, y, 15, 0, Math.PI * 2);
-            ctx.strokeStyle = '#ff6b6b';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            
-            // 绘制拖拽指示器
-            if (this.isDragging) {
-                ctx.beginPath();
-                ctx.moveTo(x, y - 20);
-                ctx.lineTo(x, y - 40);
-                ctx.lineTo(x + 10, y - 35);
-                ctx.closePath();
-                ctx.fillStyle = '#ff6b6b';
-                ctx.fill();
-                
-                ctx.fillStyle = '#ff6b6b';
-                ctx.font = 'bold 14px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('拖拽调整', x, y - 50);
-            }
         }
     }
     

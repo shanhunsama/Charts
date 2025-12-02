@@ -3,7 +3,6 @@ class BaseInteraction {
     constructor(chartCore) {
         this.chartCore = chartCore;
         this.hoveredIndex = -1;
-        this.selectedIndex = -1;
     }
     
     // 绑定基础事件 - 只保留基本的事件监听
@@ -32,7 +31,7 @@ class BaseInteraction {
         }
     }
     
-    // 点击处理
+    // 点击处理 - 只显示工具提示，不设置选中状态
     handleClick(e) {
         const rect = this.chartCore.canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
@@ -40,10 +39,7 @@ class BaseInteraction {
         
         const clickedIndex = this.getDataIndexAtPosition(mouseX, mouseY);
         if (clickedIndex >= 0) {
-            this.selectedIndex = clickedIndex;
             this.showDataPointDetails(clickedIndex);
-            this.chartCore.drawChart();
-            this.drawInteractions();
         }
     }
     
@@ -52,6 +48,12 @@ class BaseInteraction {
         this.hoveredIndex = -1;
         this.chartCore.drawChart();
         this.drawInteractions();
+        
+        // 隐藏工具提示
+        const tooltip = document.getElementById('dataPointTooltip');
+        if (tooltip) {
+            tooltip.style.display = 'none';
+        }
     }
     
     // 抽象方法 - 由子类实现
