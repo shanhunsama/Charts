@@ -15,7 +15,6 @@ class ChartControls {
         this.initControlButtons();
         this.initTooltips();
         this.initKeyboardShortcuts();
-        this.initChartInteractions();
         this.initDraggablePanel();
         this.initCollapseToggle(); // 添加折叠功能初始化
     }
@@ -95,14 +94,8 @@ class ChartControls {
         });
     }
     
-    initChartInteractions() {
-        // 双击切换图表类型
-        this.chartCore.canvas.addEventListener('dblclick', () => {
-            this.chartCore.switchChartType();
-            document.getElementById('chartType').value = this.chartCore.chartType;
-            this.chartCore.updateStats();
-        });
-    }
+    // 移除双击切换图表功能
+    // initChartInteractions() 方法已被删除
     
     showTooltip(text, x, y) {
         this.tooltip.textContent = text;
