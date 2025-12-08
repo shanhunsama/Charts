@@ -2,7 +2,7 @@ class ChartApp {
     constructor() {
         this.chart = null;
         this.currentType = 'line';
-        this.currentData = [];
+        this.currentData = { values: [], labels: [] }; // 修改为对象结构
         this.controlPanel = null;
         this.chartError = null;
         this.init();
@@ -34,14 +34,38 @@ class ChartApp {
             
             if (result.success) {
                 this.currentType = result.config.chart_type;
-                this.currentData = result.config.data;
+                // 处理新的数据结构
+                if (result.config.data && typeof result.config.data === 'object') {
+                    if (Array.isArray(result.config.data)) {
+                        // 向后兼容：如果是数组，转换为新结构
+                        this.currentData = {
+                            values: result.config.data,
+                            labels: result.config.data.map((_, index) => `数据${index + 1}`)
+                        };
+                    } else {
+                        // 新结构：包含values和labels的对象
+                        this.currentData = {
+                            values: result.config.data.values || [],
+                            labels: result.config.data.labels || []
+                        };
+                    }
+                } else {
+                    // 默认数据
+                    this.currentData = {
+                        values: [65, 59, 80, 81, 56, 55],
+                        labels: ['数据1', '数据2', '数据3', '数据4', '数据5', '数据6']
+                    };
+                }
             } else {
                 throw new Error('配置加载失败');
             }
         } catch (error) {
             console.error('加载配置失败:', error);
-            this.currentData = [65, 59, 80, 81, 56, 55];
-            // 不显示错误，使用默认数据继续
+            // 使用默认数据
+            this.currentData = {
+                values: [65, 59, 80, 81, 56, 55],
+                labels: ['数据1', '数据2', '数据3', '数据4', '数据5', '数据6']
+            };
         }
     }
 
@@ -60,10 +84,12 @@ class ChartApp {
             const chartConfig = {
                 type: this.currentType,
                 data: {
-                    labels: this.currentData.map((_, index) => `数据${index + 1}`),
+                    labels: this.currentData.labels.length > 0 ? 
+                           this.currentData.labels : 
+                           this.currentData.values.map((_, index) => `数据${index + 1}`),
                     datasets: [{
                         label: '图表数据',
-                        data: this.currentData,
+                        data: this.currentData.values,
                         backgroundColor: this.getBackgroundColors(),
                         borderColor: '#667eea',
                         borderWidth: 2,
@@ -171,7 +197,7 @@ class ChartApp {
             '#fa709a', '#fee140', '#a8edea', '#fed6e3'
         ];
         
-        return this.currentData.map((_, index) => colors[index % colors.length]);
+        return this.currentData.values.map((_, index) => colors[index % colors.length]);
     }
 
     async updateData() {
@@ -183,7 +209,24 @@ class ChartApp {
             const result = await response.json();
             
             if (result.success) {
-                this.currentData = result.data;
+                // 处理新的数据结构
+                if (result.data && typeof result.data === 'object') {
+                    if (Array.isArray(result.data)) {
+                        // 向后兼容
+                        this.currentData = {
+                            values: result.data,
+                            labels: result.data.map((_, index) => `数据${index + 1}`)
+                        };
+                    } else {
+                        // 新结构
+                        this.currentData = {
+                            values: result.data.values || [],
+                            labels: result.data.labels || []
+                        };
+                    }
+                } else {
+                    throw new Error('返回数据格式错误');
+                }
                 this.updateChart();
             } else {
                 throw new Error('数据更新失败');
@@ -191,6 +234,17 @@ class ChartApp {
         } catch (error) {
             console.error('更新数据失败:', error);
             this.showChartError('数据更新失败: ' + error.message);
+        }
+    }
+
+    // 添加updateChart方法
+    updateChart() {
+        if (this.chart) {
+            this.chart.data.labels = this.currentData.labels.length > 0 ? 
+                                   this.currentData.labels : 
+                                   this.currentData.values.map((_, index) => `数据${index + 1}`);
+            this.chart.data.datasets[0].data = this.currentData.values;
+            this.chart.update();
         }
     }
 
