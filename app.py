@@ -192,35 +192,58 @@ class ChartServer:
         return {'success': True, 'message': '服务器已停止'}
 
 # 命令行接口
+# 在文件末尾添加以下代码，替换现有的main()函数
+
 def main():
     import argparse
+    import socket
+    
+    def find_available_port(start_port=5000, max_port=6000):
+        """查找可用的端口"""
+        for port in range(start_port, max_port + 1):
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.settimeout(1)
+                    result = s.connect_ex(('127.0.0.1', port))
+                    if result != 0:  # 0表示端口被占用
+                        return port
+            except:
+                continue
+        return start_port  # 返回默认端口
     
     parser = argparse.ArgumentParser(description='图表服务器')
     parser.add_argument('--host', default='127.0.0.1', help='服务器主机')
-    parser.add_argument('--port', type=int, default=5000, help='服务器端口')
-    parser.add_argument('--open-browser', action='store_true', help='自动打开浏览器')
+    parser.add_argument('--port', type=int, help='服务器端口（自动选择可用端口）')
+    parser.add_argument('--browser', action='store_true', help='启动后打开浏览器')
     parser.add_argument('--stop', action='store_true', help='停止服务器')
     
     args = parser.parse_args()
     
-    server = ChartServer(args.host, args.port)
+    # 自动选择可用端口
+    if args.port is None:
+        args.port = find_available_port()
+        print(f"自动选择端口: {args.port}")
+    
+    server = ChartServer(host=args.host, port=args.port)
     
     if args.stop:
         result = server.stop()
         print(result.get('message', '操作完成'))
     else:
-        result = server.start(args.open_browser)
-        print(result.get('message', '操作完成'))
-        
+        result = server.start(open_browser=args.browser)
         if result['success']:
+            print(result['message'])
+            print("按 Ctrl+C 停止服务器")
             try:
                 # 保持服务器运行
                 while server.is_running:
                     import time
                     time.sleep(1)
             except KeyboardInterrupt:
+                print("\\n正在停止服务器...")
                 server.stop()
-                print('服务器已停止')
+        else:
+            print("启动失败:", result.get('error', '未知错误'))
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
