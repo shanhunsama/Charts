@@ -194,37 +194,74 @@ class ChartServer:
 # 命令行接口
 # 在文件末尾添加以下代码，替换现有的main()函数
 
+# 修改main()函数中的端口处理逻辑
 def main():
     import argparse
     import socket
+    import json
+    import os
     
-    def find_available_port(start_port=5000, max_port=6000):
-        """查找可用的端口"""
-        for port in range(start_port, max_port + 1):
+    def find_available_port(preferred_port=5000, max_port=6000):
+        """查找可用的端口，优先使用指定端口"""
+        # 先尝试首选端口
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1)
+                result = s.connect_ex(('127.0.0.1', preferred_port))
+                if result != 0:  # 0表示端口被占用
+                    return preferred_port
+        except:
+            pass
+        
+        # 首选端口被占用，查找其他可用端口
+        for port in range(preferred_port + 1, max_port + 1):
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.settimeout(1)
                     result = s.connect_ex(('127.0.0.1', port))
-                    if result != 0:  # 0表示端口被占用
+                    if result != 0:
                         return port
             except:
                 continue
-        return start_port  # 返回默认端口
+        
+        return preferred_port  # 返回首选端口
+    
+    def save_port_info(port, pid):
+        """保存端口信息到文件，供软件端读取"""
+        info = {
+            'port': port,
+            'pid': pid,
+            'timestamp': time.time()
+        }
+        with open('server_info.json', 'w', encoding='utf-8') as f:
+            json.dump(info, f)
+    
+    def load_port_info():
+        """从文件读取端口信息"""
+        try:
+            with open('server_info.json', 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return None
     
     parser = argparse.ArgumentParser(description='图表服务器')
     parser.add_argument('--host', default='127.0.0.1', help='服务器主机')
-    parser.add_argument('--port', type=int, help='服务器端口（自动选择可用端口）')
+    parser.add_argument('--port', type=int, default=5000, help='服务器端口（默认5000）')
     parser.add_argument('--browser', action='store_true', help='启动后打开浏览器')
     parser.add_argument('--stop', action='store_true', help='停止服务器')
+    parser.add_argument('--save-port', action='store_true', help='保存端口信息到文件')
     
     args = parser.parse_args()
     
-    # 自动选择可用端口
-    if args.port is None:
-        args.port = find_available_port()
-        print(f"自动选择端口: {args.port}")
+    # 自动选择可用端口（优先使用指定端口）
+    actual_port = find_available_port(args.port)
     
-    server = ChartServer(host=args.host, port=args.port)
+    if actual_port != args.port:
+        print(f"端口 {args.port} 被占用，使用端口: {actual_port}")
+    else:
+        print(f"使用端口: {actual_port}")
+    
+    server = ChartServer(host=args.host, port=actual_port)
     
     if args.stop:
         result = server.stop()
@@ -232,16 +269,23 @@ def main():
     else:
         result = server.start(open_browser=args.browser)
         if result['success']:
+            # 保存端口信息
+            if args.save_port:
+                save_port_info(actual_port, os.getpid())
+                print(f"端口信息已保存到 server_info.json")
+            
             print(result['message'])
             print("按 Ctrl+C 停止服务器")
             try:
-                # 保持服务器运行
                 while server.is_running:
                     import time
                     time.sleep(1)
             except KeyboardInterrupt:
-                print("\\n正在停止服务器...")
+                print("\n正在停止服务器...")
                 server.stop()
+                # 清理端口信息文件
+                if os.path.exists('server_info.json'):
+                    os.remove('server_info.json')
         else:
             print("启动失败:", result.get('error', '未知错误'))
 
