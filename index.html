@@ -1,97 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>数据图表</title>
-    <link rel="stylesheet" href="styles/main.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图表展示</title>
+    <link rel="stylesheet" href="styles/chart.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <canvas id="chartCanvas"></canvas>
+    <!-- 控制面板切换按钮 -->
+    <button id="controlToggle" class="control-toggle">控制面板</button>
     
-    <!-- 控制面板 -->
-    <div class="control-panel">
-        <!-- 折叠按钮 -->
-        <div class="collapse-toggle">
-            <button class="collapse-btn" id="collapseBtn" title="折叠/展开控制面板">⚙️</button>
+    <!-- 可折叠控制面板 -->
+    <div id="controlPanel" class="control-panel">
+        <div class="panel-header">
+            <h3>图表控制</h3>
+            <button id="closePanel" class="close-btn">×</button>
         </div>
-        
-        <!-- 控制面板内容 -->
         <div class="panel-content">
-            <!-- 图表类型下拉框 -->
-            <div class="chart-type-selector">
-                <label for="chartType">图表类型</label>
-                <select id="chartType" class="chart-type-dropdown">
-                    <option value="line">📈 折线图</option>
-                    <option value="bar">📊 柱状图</option>
-                    <option value="pie">🥧 饼图</option>
-                </select>
-            </div>
-            
-            <!-- 数据统计面板 -->
-            <div class="data-info-panel">
-                <div class="data-info-header">
-                    <h4>
-                        <span>📊</span>
-                        数据统计
-                    </h4>
-                    <span class="icon">▼</span>
-                </div>
-                <div class="data-info-content">
-                    <div class="data-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">数据点:</span>
-                            <span class="stat-value" id="dataPoints">6</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">最大值:</span>
-                            <span class="stat-value" id="maxValue">81</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">最小值:</span>
-                            <span class="stat-value" id="minValue">55</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">平均值:</span>
-                            <span class="stat-value" id="avgValue">66.0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">总和:</span>
-                            <span class="stat-value" id="sumValue">396</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">标准差:</span>
-                            <span class="stat-value" id="stdValue">10.2</span>
-                        </div>
-                    </div>
+            <div class="control-group">
+                <label>图表类型:</label>
+                <div class="button-group">
+                    <button class="type-btn active" data-type="line">折线图</button>
+                    <button class="type-btn" data-type="bar">柱状图</button>
+                    <button class="type-btn" data-type="pie">饼图</button>
                 </div>
             </div>
-            
-            <!-- 控制按钮 -->
-            <div class="control-buttons">
-                <button class="control-btn" id="randomDataBtn" title="生成随机数据 (Ctrl+R)">随机数据</button>
-                <button class="control-btn" id="exportBtn" title="导出图表为图片 (Ctrl+E)">导出图片</button>
+            <div class="control-group">
+                <label>数据操作:</label>
+                <div class="button-group">
+                    <button id="randomData" class="action-btn">随机数据</button>
+                    <button id="updateChart" class="action-btn">更新图表</button>
+                </div>
             </div>
         </div>
     </div>
-
-    <!-- 工具提示 -->
-    <div class="tooltip" id="tooltip"></div>
-
-    <!-- 模块化图表脚本 -->
-    <script src="scripts/chart-utils.js"></script>
-    <script src="scripts/chart-axes.js"></script>
-    <script src="scripts/chart-core.js"></script>
     
-    <!-- 重构后的交互模块 -->
-    <script src="scripts/interaction/base-interaction.js"></script>
-    <script src="scripts/interaction/line-interaction.js"></script>
-    <script src="scripts/interaction/bar-interaction.js"></script>
-    <script src="scripts/interaction/pie-interaction.js"></script>
-    <script src="scripts/interaction/tooltip-manager.js"></script>
-    <script src="scripts/interaction/interaction-manager.js"></script>
-    <script src="scripts/chart-interaction.js"></script>
-    
-    <script src="scripts/controls.js"></script>
-    <script src="scripts/main.js"></script>
+    <div class="chart-container">
+        <canvas id="chartCanvas"></canvas>
+    </div>
+    <script src="scripts/chart.js"></script>
 </body>
 </html>
