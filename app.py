@@ -4,14 +4,21 @@ import random
 import threading
 import webbrowser
 import sys
+import atexit
+import signal
+import socket
+import time
+import json
 
 class ChartServer:
-    def __init__(self, host='127.0.0.1', port=5000):
+    def __init__(self, host='127.0.0.1', preferred_port=5000):
         self.app = Flask(__name__)
         self.host = host
-        self.port = port
+        self.preferred_port = preferred_port
+        self.actual_port = preferred_port  # 实际使用的端口
         self.server_thread = None
         self.is_running = False
+        self.info_file = 'chart_server_info.json'  # 端口信息文件
         
         # 当前数据状态
         self.current_data = {
@@ -20,7 +27,18 @@ class ChartServer:
         }
         self.current_chart_type = 'line'
         
+        # 注册退出时的清理函数
+        atexit.register(self.cleanup)
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
+        
         self.setup_routes()
+    
+    def signal_handler(self, signum, frame):
+        """信号处理函数"""
+        print(f"\n收到信号 {signum}，正在关闭服务器...")
+        self.cleanup()
+        sys.exit(0)
     
     def setup_routes(self):
         @self.app.route('/')
@@ -41,7 +59,9 @@ class ChartServer:
                 'success': True,
                 'status': 'running',
                 'host': self.host,
-                'port': self.port
+                'preferred_port': self.preferred_port,
+                'actual_port': self.actual_port,
+                'url': f'http://{self.host}:{self.actual_port}'
             })
         
         @self.app.route('/api/config', methods=['GET'])
@@ -145,36 +165,144 @@ class ChartServer:
             threading.Thread(target=shutdown_server).start()
             return jsonify({'success': True, 'message': '服务器正在关闭'})
     
-    def start(self, open_browser=False):
+    def find_available_port(self, start_port=None, max_port=6000):
+        """查找可用的端口"""
+        if start_port is None:
+            start_port = self.preferred_port
+        
+        # 先尝试首选端口
+        if self._check_port_available(start_port):
+            return start_port
+        
+        # 首选端口被占用，查找其他可用端口
+        print(f"端口 {start_port} 被占用，正在查找可用端口...")
+        for port in range(start_port + 1, max_port + 1):
+            if self._check_port_available(port):
+                print(f"找到可用端口: {port}")
+                return port
+        
+        # 如果没有找到可用端口，返回首选端口（会启动失败）
+        print(f"在端口范围 {start_port}-{max_port} 内未找到可用端口")
+        return start_port
+    
+    def create_info_file(self):
+        """创建端口信息文件"""
+        info = {
+            'host': self.host,
+            'preferred_port': self.preferred_port,
+            'actual_port': self.actual_port,
+            'url': f'http://{self.host}:{self.actual_port}',
+            'pid': os.getpid(),
+            'start_time': time.time(),
+            'status': 'running',
+            'apis': {
+                'status': '/api/status',
+                'config': '/api/config',
+                'update': '/api/update',
+                'switch': '/api/switch',
+                'random': '/api/random'
+            }
+        }
+        
+        try:
+            with open(self.info_file, 'w', encoding='utf-8') as f:
+                json.dump(info, f, indent=2, ensure_ascii=False)
+            print(f"端口信息已保存到: {self.info_file}")
+            return True
+        except Exception as e:
+            print(f"创建端口信息文件失败: {e}")
+            return False
+    
+    def read_info_file(self):
+        """读取端口信息文件"""
+        try:
+            if os.path.exists(self.info_file):
+                with open(self.info_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except Exception as e:
+            print(f"读取端口信息文件失败: {e}")
+        return None
+    
+    def cleanup(self):
+        """清理函数：删除端口信息文件"""
+        try:
+            if os.path.exists(self.info_file):
+                os.remove(self.info_file)
+                print(f"已清理端口信息文件: {self.info_file}")
+        except Exception as e:
+            print(f"清理端口信息文件失败: {e}")
+    
+    def _check_port_available(self, port):
+        """检查指定端口是否可用"""
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1)
+                result = s.connect_ex((self.host, port))
+                return result != 0  # 0表示端口被占用
+        except:
+            return False
+    
+    def start(self, open_browser=False, create_info_file=True):
         """启动服务器"""
         if self.is_running:
             return {'success': False, 'error': '服务器已在运行'}
         
+        # 查找可用端口
+        self.actual_port = self.find_available_port()
+        
+        # 检查最终选择的端口是否可用
+        if not self._check_port_available(self.actual_port):
+            return {'success': False, 'error': f'端口 {self.actual_port} 已被占用'}
+        
         def run_server():
             self.is_running = True
-            self.app.run(
-                host=self.host, 
-                port=self.port, 
-                debug=False, 
-                use_reloader=False
-            )
-            self.is_running = False
+            try:
+                self.app.run(
+                    host=self.host, 
+                    port=self.actual_port, 
+                    debug=False, 
+                    use_reloader=False
+                )
+            except Exception as e:
+                print(f"服务器运行错误: {e}")
+            finally:
+                self.is_running = False
         
         self.server_thread = threading.Thread(target=run_server, daemon=True)
         self.server_thread.start()
         
         # 等待服务器启动
-        import time
         time.sleep(2)
         
+        # 检查服务器是否成功启动
+        if not self._check_server_running():
+            self.is_running = False
+            return {'success': False, 'error': '服务器启动失败'}
+        
+        # 创建端口信息文件
+        if create_info_file:
+            self.create_info_file()
+        
         if open_browser:
-            webbrowser.open(f'http://{self.host}:{self.port}')
+            webbrowser.open(f'http://{self.host}:{self.actual_port}')
         
         return {
             'success': True, 
-            'message': f'服务器已启动在 http://{self.host}:{self.port}',
-            'url': f'http://{self.host}:{self.port}'
+            'message': f'服务器已启动在 http://{self.host}:{self.actual_port}',
+            'preferred_port': self.preferred_port,
+            'actual_port': self.actual_port,
+            'url': f'http://{self.host}:{self.actual_port}',
+            'info_file': self.info_file if create_info_file else None
         }
+    
+    def _check_server_running(self):
+        """检查服务器是否在运行"""
+        try:
+            import requests
+            response = requests.get(f'http://{self.host}:{self.actual_port}/api/status', timeout=2)
+            return response.status_code == 200
+        except:
+            return False
     
     def stop(self):
         """停止服务器"""
@@ -182,112 +310,69 @@ class ChartServer:
             return {'success': False, 'error': '服务器未运行'}
         
         # 发送关闭请求
-        import requests
         try:
-            requests.post(f'http://{self.host}:{self.port}/api/shutdown', timeout=2)
+            import requests
+            requests.post(f'http://{self.host}:{self.actual_port}/api/shutdown', timeout=2)
         except:
             pass
+        
+        # 等待服务器停止
+        for i in range(5):
+            if not self.is_running:
+                break
+            time.sleep(1)
         
         self.is_running = False
+        self.cleanup()
         return {'success': True, 'message': '服务器已停止'}
 
-# 命令行接口
-# 在文件末尾添加以下代码，替换现有的main()函数
-
-# 修改main()函数中的端口处理逻辑
 def main():
+    """主函数"""
     import argparse
-    import socket
-    import json
-    import os
-    
-    def find_available_port(preferred_port=5000, max_port=6000):
-        """查找可用的端口，优先使用指定端口"""
-        # 先尝试首选端口
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(1)
-                result = s.connect_ex(('127.0.0.1', preferred_port))
-                if result != 0:  # 0表示端口被占用
-                    return preferred_port
-        except:
-            pass
-        
-        # 首选端口被占用，查找其他可用端口
-        for port in range(preferred_port + 1, max_port + 1):
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.settimeout(1)
-                    result = s.connect_ex(('127.0.0.1', port))
-                    if result != 0:
-                        return port
-            except:
-                continue
-        
-        return preferred_port  # 返回首选端口
-    
-    def save_port_info(port, pid):
-        """保存端口信息到文件，供软件端读取"""
-        info = {
-            'port': port,
-            'pid': pid,
-            'timestamp': time.time()
-        }
-        with open('server_info.json', 'w', encoding='utf-8') as f:
-            json.dump(info, f)
-    
-    def load_port_info():
-        """从文件读取端口信息"""
-        try:
-            with open('server_info.json', 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except:
-            return None
     
     parser = argparse.ArgumentParser(description='图表服务器')
     parser.add_argument('--host', default='127.0.0.1', help='服务器主机')
-    parser.add_argument('--port', type=int, default=5000, help='服务器端口（默认5000）')
+    parser.add_argument('--port', type=int, default=5000, help='首选服务器端口（默认5000）')
+    parser.add_argument('--max-port', type=int, default=6000, help='最大端口号（默认6000）')
     parser.add_argument('--browser', action='store_true', help='启动后打开浏览器')
     parser.add_argument('--stop', action='store_true', help='停止服务器')
-    parser.add_argument('--save-port', action='store_true', help='保存端口信息到文件')
+    parser.add_argument('--no-info-file', action='store_true', help='不创建端口信息文件')
     
     args = parser.parse_args()
     
-    # 自动选择可用端口（优先使用指定端口）
-    actual_port = find_available_port(args.port)
-    
-    if actual_port != args.port:
-        print(f"端口 {args.port} 被占用，使用端口: {actual_port}")
-    else:
-        print(f"使用端口: {actual_port}")
-    
-    server = ChartServer(host=args.host, port=actual_port)
+    # 创建服务器实例
+    server = ChartServer(host=args.host, preferred_port=args.port)
     
     if args.stop:
+        # 停止服务器
         result = server.stop()
         print(result.get('message', '操作完成'))
     else:
-        result = server.start(open_browser=args.browser)
+        # 启动服务器
+        create_info_file = not args.no_info_file
+        result = server.start(open_browser=args.browser, create_info_file=create_info_file)
+        
         if result['success']:
-            # 保存端口信息
-            if args.save_port:
-                save_port_info(actual_port, os.getpid())
-                print(f"端口信息已保存到 server_info.json")
-            
+            print("=" * 50)
+            print(f"首选端口: {result['preferred_port']}")
+            print(f"实际端口: {result['actual_port']}")
             print(result['message'])
+            if create_info_file:
+                print(f"端口信息文件: {server.info_file}")
+            print("=" * 50)
+            print("服务器运行中...")
             print("按 Ctrl+C 停止服务器")
+            
             try:
+                # 保持主线程运行
                 while server.is_running:
-                    import time
                     time.sleep(1)
             except KeyboardInterrupt:
                 print("\n正在停止服务器...")
                 server.stop()
-                # 清理端口信息文件
-                if os.path.exists('server_info.json'):
-                    os.remove('server_info.json')
         else:
             print("启动失败:", result.get('error', '未知错误'))
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
