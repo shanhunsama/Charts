@@ -9,6 +9,7 @@ import signal
 import socket
 import time
 import json
+import configparser  # 新增INI配置文件支持
 
 class ChartServer:
     def __init__(self, host='127.0.0.1', preferred_port=5000):
@@ -18,7 +19,7 @@ class ChartServer:
         self.actual_port = preferred_port  # 实际使用的端口
         self.server_thread = None
         self.is_running = False
-        self.info_file = 'chart_server_info.json'  # 端口信息文件
+        self.info_file = 'chart_server_info.ini'  # 改为INI格式
         
         # 当前数据状态
         self.current_data = {
@@ -186,27 +187,39 @@ class ChartServer:
         return start_port
     
     def create_info_file(self):
-        """创建端口信息文件"""
-        info = {
+        """创建端口信息文件（INI格式）"""
+        config = configparser.ConfigParser()
+        
+        # 服务器信息部分
+        config['Server'] = {
             'host': self.host,
-            'preferred_port': self.preferred_port,
-            'actual_port': self.actual_port,
+            'preferred_port': str(self.preferred_port),
+            'actual_port': str(self.actual_port),
             'url': f'http://{self.host}:{self.actual_port}',
-            'pid': os.getpid(),
-            'start_time': time.time(),
-            'status': 'running',
-            'apis': {
-                'status': '/api/status',
-                'config': '/api/config',
-                'update': '/api/update',
-                'switch': '/api/switch',
-                'random': '/api/random'
-            }
+            'pid': str(os.getpid()),
+            'start_time': str(time.time()),
+            'status': 'running'
+        }
+        
+        # API接口部分
+        config['APIs'] = {
+            'status': '/api/status',
+            'config': '/api/config',
+            'update': '/api/update',
+            'switch': '/api/switch',
+            'random': '/api/random'
+        }
+        
+        # 当前数据状态部分
+        config['Data'] = {
+            'chart_type': self.current_chart_type,
+            'values': ','.join(map(str, self.current_data['values'])),
+            'labels': ','.join(self.current_data['labels'])
         }
         
         try:
             with open(self.info_file, 'w', encoding='utf-8') as f:
-                json.dump(info, f, indent=2, ensure_ascii=False)
+                config.write(f)
             print(f"端口信息已保存到: {self.info_file}")
             return True
         except Exception as e:
@@ -214,11 +227,34 @@ class ChartServer:
             return False
     
     def read_info_file(self):
-        """读取端口信息文件"""
+        """读取端口信息文件（INI格式）"""
         try:
             if os.path.exists(self.info_file):
-                with open(self.info_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                config = configparser.ConfigParser()
+                config.read(self.info_file, encoding='utf-8')
+                
+                info = {}
+                
+                # 读取服务器信息
+                if config.has_section('Server'):
+                    info.update(dict(config.items('Server')))
+                
+                # 读取API信息
+                if config.has_section('APIs'):
+                    info['apis'] = dict(config.items('APIs'))
+                
+                # 读取数据信息
+                if config.has_section('Data'):
+                    data_info = dict(config.items('Data'))
+                    # 转换数据类型
+                    if 'values' in data_info:
+                        info['values'] = [float(x) for x in data_info['values'].split(',')]
+                    if 'labels' in data_info:
+                        info['labels'] = data_info['labels'].split(',')
+                    if 'chart_type' in data_info:
+                        info['chart_type'] = data_info['chart_type']
+                
+                return info
         except Exception as e:
             print(f"读取端口信息文件失败: {e}")
         return None
