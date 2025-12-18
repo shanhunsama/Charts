@@ -33,10 +33,10 @@ struct FChartConfig
     FString Host = "127.0.0.1";
 
     UPROPERTY(BlueprintReadWrite, Category = "Chart")
-    int32 PreferredPort = 5000;
+    int32 PreferredPort = 8500;
 
     UPROPERTY(BlueprintReadWrite, Category = "Chart")
-    int32 MaxPort = 6000;
+    int32 MaxPort = 8600;
 
     UPROPERTY(BlueprintReadWrite, Category = "Chart")
     bool AutoStart = true;
@@ -48,7 +48,7 @@ struct FChartConfig
     bool UseFixedProxy = true;
 
     UPROPERTY(BlueprintReadWrite, Category = "Chart")
-    int32 FixedProxyPort = 8080;
+    int32 FixedProxyPort = 8500;
 };
 
 

@@ -378,8 +378,8 @@ def main():
     
     parser = argparse.ArgumentParser(description='图表服务器 - UE插件专用版')
     parser.add_argument('--host', default='127.0.0.1', help='服务器主机')
-    parser.add_argument('--port', type=int, default=5000, help='首选服务器端口（默认5000）')
-    parser.add_argument('--max-port', type=int, default=6000, help='最大端口号（默认6000）')
+    parser.add_argument('--port', type=int, default=8500, help='首选服务器端口（默认5000）')
+    parser.add_argument('--max-port', type=int, default=8600, help='最大端口号（默认6000）')
     parser.add_argument('--browser', action='store_true', help='启动后打开浏览器')
     parser.add_argument('--stop', action='store_true', help='停止服务器')
     parser.add_argument('--no-info-file', action='store_true', help='不创建端口信息文件')
