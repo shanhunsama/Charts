@@ -11,6 +11,16 @@ import time
 import json
 import configparser  # 新增INI配置文件支持
 
+def get_resource_path(relative_path):
+    """获取资源文件的正确路径（支持打包后运行）"""
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller打包后的路径
+        base_path = sys._MEIPASS
+    else:
+        # 开发环境路径
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, relative_path)
+
 class ChartServer:
     def __init__(self, host='127.0.0.1', preferred_port=5000):
         self.app = Flask(__name__)
@@ -44,15 +54,15 @@ class ChartServer:
     def setup_routes(self):
         @self.app.route('/')
         def index():
-            return send_from_directory('.', 'index.html')
+            return send_from_directory(get_resource_path('.'), 'index.html')
         
         @self.app.route('/styles/<path:filename>')
         def serve_styles(filename):
-            return send_from_directory('styles', filename)
+            return send_from_directory(get_resource_path('styles'), filename)
         
         @self.app.route('/scripts/<path:filename>')
         def serve_scripts(filename):
-            return send_from_directory('scripts', filename)
+            return send_from_directory(get_resource_path('scripts'), filename)
         
         @self.app.route('/api/status', methods=['GET'])
         def get_status():
@@ -366,13 +376,14 @@ def main():
     """主函数"""
     import argparse
     
-    parser = argparse.ArgumentParser(description='图表服务器')
+    parser = argparse.ArgumentParser(description='图表服务器 - UE插件专用版')
     parser.add_argument('--host', default='127.0.0.1', help='服务器主机')
     parser.add_argument('--port', type=int, default=5000, help='首选服务器端口（默认5000）')
     parser.add_argument('--max-port', type=int, default=6000, help='最大端口号（默认6000）')
     parser.add_argument('--browser', action='store_true', help='启动后打开浏览器')
     parser.add_argument('--stop', action='store_true', help='停止服务器')
     parser.add_argument('--no-info-file', action='store_true', help='不创建端口信息文件')
+    # 移除--no-info-file参数，因为不再使用配置文件
     
     args = parser.parse_args()
     
