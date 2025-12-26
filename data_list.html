@@ -26,12 +26,28 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
+            table-layout: fixed; /* 固定表格布局 */
         }
 
         .data-table th, .data-table td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
+        }
+
+        /* 设置列宽比例 - 操作列在最右边 */
+        .data-table th:nth-child(1), .data-table td:nth-child(1) {
+            width: 40%; /* 数据名称列 */
+        }
+
+        .data-table th:nth-child(2), .data-table td:nth-child(2) {
+            width: 40%; /* 当前值列 */
+            text-align: left;
+        }
+
+        .data-table th:nth-child(3), .data-table td:nth-child(3) {
+            width: 20%; /* 操作列 - 在最右边 */
+            text-align: right; /* 按钮靠右对齐 */
         }
 
         .data-table th {
@@ -53,6 +69,7 @@
             cursor: pointer;
             font-size: 12px;
             transition: all 0.3s ease;
+            float: right; /* 按钮向右浮动 */
         }
 
         .select-btn:hover {
@@ -124,11 +141,6 @@
                 <!-- 数据将通过JavaScript动态填充 -->
             </tbody>
         </table>
-
-        <div class="navigation">
-            <button class="nav-btn" onclick="goToChartPage()">查看图表页面</button>
-            <button class="nav-btn" onclick="refreshData()">刷新数据</button>
-        </div>
     </div>
 
     <script>
@@ -193,7 +205,7 @@
                     <td>${value}</td>
                     <td>
                         <button class="select-btn" onclick="selectDataItem('${key}')">
-                            选择查看历史
+                            查看历史
                         </button>
                     </td>
                 `;
