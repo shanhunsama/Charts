@@ -338,7 +338,7 @@
             if (timeElement) timeElement.textContent = lastUpdate;
         }
 
-        // 加载示例数据
+        // 修改示例数据，添加非数值类型
         function loadSampleData() {
             // 示例数据 - 模拟UE发送的两个映射
             const nameToDisplayMap = {
@@ -349,7 +349,10 @@
                 "wind_sensor_001": "风速",
                 "voltage_sensor_001": "电压",
                 "current_sensor_001": "电流",
-                "power_sensor_001": "功率"
+                "power_sensor_001": "功率",
+                "device_status": "设备状态",
+                "last_update": "最后更新时间",
+                "location": "设备位置"
             };
             
             const nameToDataMap = {
@@ -360,7 +363,10 @@
                 "wind_sensor_001": 3.2,
                 "voltage_sensor_001": 12.5,
                 "current_sensor_001": 2.3,
-                "power_sensor_001": 28.8
+                "power_sensor_001": 28.8,
+                "device_status": "运行中",
+                "last_update": "2024-01-15 14:30:25",
+                "location": "实验室A区"
             };
             
             updateDataTable(nameToDisplayMap, nameToDataMap);
