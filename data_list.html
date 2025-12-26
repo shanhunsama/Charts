@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据列表</title>
+    <link rel="stylesheet" href="styles/chart.css">
+    <style>
+        .data-list-container {
+            width: 90vw;
+            max-width: 1200px;
+            margin: 20px auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .data-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .data-table tr:hover {
+            background: #f5f7ff;
+        }
+
+        .select-btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .select-btn:hover {
+            background: #00c6ff;
+            transform: translateY(-1px);
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .ue-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 1001;
+        }
+    </style>
+    <!-- UE通信代码 -->
+    <script>
+        "object"!=typeof ue||"object"!=typeof ue.interface?("object"!=typeof ue&&(ue={}),ue.interface={},ue.interface.broadcast=function(e,t){if("string"==typeof e){var o=[e,""];void 0!==t&&(o[1]=t);var n=encodeURIComponent(JSON.stringify(o));"object"==typeof history&&"function"==typeof history.pushState?(history.pushState({},"","#"+n),history.pushState({},"","#"+encodeURIComponent("[]"))):(document.location.hash=n,document.location.hash=encodeURIComponent("[]"))}}):function(e){ue.interface={},ue.interface.broadcast=function(t,o){"string"==typeof t&&(void 0!==o?e.broadcast(t,JSON.stringify(o)):e.broadcast(t,""))}}(ue.interface),(window.ue5=ue.interface.broadcast);
+    </script>
+</head>
+<body>
+    <!-- UE状态显示 -->
+    <div id="ueStatus" class="ue-status" style="display: none;">
+        <div>UE状态: <span id="ueConnectionStatus">未连接</span></div>
+        <div>最后更新: <span id="lastUpdateTime">-</span></div>
+    </div>
+
+    <div class="data-list-container">
+        <div class="page-header">
+            <h1>数据列表</h1>
+            <p>选择数据项查看历史图表</p>
+        </div>
+
+        <table class="data-table" id="dataTable">
+            <thead>
+                <tr>
+                    <th>数据名称</th>
+                    <th>当前值</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="dataTableBody">
+                <!-- 数据将通过JavaScript动态填充 -->
+            </tbody>
+        </table>
+
+        <div class="navigation">
+            <button class="nav-btn" onclick="goToChartPage()">查看图表页面</button>
+            <button class="nav-btn" onclick="refreshData()">刷新数据</button>
+        </div>
+    </div>
+
+    <script>
+        // 全局数据存储
+        let currentData = {};
+        let selectedDataItem = null;
+
+        // 初始化函数
+        function init() {
+            setupUEConnection();
+            // 初始加载示例数据
+            loadSampleData();
+        }
+
+        // 设置UE连接
+        function setupUEConnection() {
+            const ueStatus = document.getElementById('ueStatus');
+            if (ueStatus) {
+                ueStatus.style.display = 'block';
+                updateUEStatus('未连接', '-');
+            }
+            
+            if (typeof ue !== 'undefined' && typeof ue.interface !== 'undefined') {
+                console.log('UE接口已连接');
+                updateUEStatus('已连接', new Date().toLocaleTimeString());
+            }
+        }
+
+        // 更新UE状态
+        function updateUEStatus(status, lastUpdate) {
+            const statusElement = document.getElementById('ueConnectionStatus');
+            const timeElement = document.getElementById('lastUpdateTime');
+            
+            if (statusElement) statusElement.textContent = status;
+            if (timeElement) timeElement.textContent = lastUpdate;
+        }
+
+        // 加载示例数据
+        function loadSampleData() {
+            // 示例数据 - 实际将由UE发送
+            const sampleData = {
+                "温度传感器": 25.6,
+                "湿度传感器": 65.2,
+                "压力传感器": 1013.2,
+                "光照强度": 850,
+                "风速": 3.2,
+                "电压": 12.5
+            };
+            updateDataTable(sampleData);
+        }
+
+        // 更新数据表格
+        function updateDataTable(data) {
+            currentData = data;
+            const tableBody = document.getElementById('dataTableBody');
+            tableBody.innerHTML = '';
+
+            Object.entries(data).forEach(([key, value]) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${key}</td>
+                    <td>${value}</td>
+                    <td>
+                        <button class="select-btn" onclick="selectDataItem('${key}')">
+                            选择查看历史
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // 选择数据项
+        function selectDataItem(dataName) {
+            selectedDataItem = dataName;
+            console.log('选择数据项:', dataName);
+            
+            // 向UE发送选择事件
+            if (typeof ue5 === 'function') {
+                ue5('DataItemSelected', dataName);
+                console.log('已向UE发送数据项选择事件:', dataName);
+            }
+            
+            // 更新状态
+            updateUEStatus('已连接', new Date().toLocaleTimeString());
+            
+            alert(`已选择数据项: ${dataName}\nUE将发送该数据的历史值到图表页面`);
+        }
+
+        // 导航到图表页面
+        function goToChartPage() {
+            window.location.href = 'history_chart.html';
+        }
+
+        // 刷新数据
+        function refreshData() {
+            if (typeof ue5 === 'function') {
+                ue5('RequestDataRefresh');
+                console.log('已请求UE刷新数据');
+            }
+            updateUEStatus('已连接', new Date().toLocaleTimeString());
+        }
+
+        // UE调用此方法来更新数据
+        ue.interface.UpdateDataList = function(data) {
+            console.log('收到UE数据更新:', data);
+            
+            try {
+                const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+                updateDataTable(parsedData);
+                updateUEStatus('已连接', new Date().toLocaleTimeString());
+                
+                return { success: true, message: '数据列表更新成功' };
+            } catch (error) {
+                console.error('处理数据时发生错误:', error);
+                return { success: false, message: '数据处理错误: ' + error.message };
+            }
+        };
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史数据图表</title>
+    <link rel="stylesheet" href="styles/chart.css">
+    <script src="scripts/chart.umd.min.js"></script>
+    <style>
+        .chart-header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .selected-item-info {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <!-- UE通信代码 -->
+    <script>
+        "object"!=typeof ue||"object"!=typeof ue.interface?("object"!=typeof ue&&(ue={}),ue.interface={},ue.interface.broadcast=function(e,t){if("string"==typeof e){var o=[e,""];void 0!==t&&(o[1]=t);var n=encodeURIComponent(JSON.stringify(o));"object"==typeof history&&"function"==typeof history.pushState?(history.pushState({},"","#"+n),history.pushState({},"","#"+encodeURIComponent("[]"))):(document.location.hash=n,document.location.hash=encodeURIComponent("[]"))}}):function(e){ue.interface={},ue.interface.broadcast=function(t,o){"string"==typeof t&&(void 0!==o?e.broadcast(t,JSON.stringify(o)):e.broadcast(t,""))}}(ue.interface),(window.ue5=ue.interface.broadcast);
+    </script>
+</head>
+<body>
+    <!-- 控制面板切换按钮 -->
+    <button id="controlToggle" class="control-toggle">控制面板</button>
+    
+    <!-- 可折叠控制面板 -->
+    <div id="controlPanel" class="control-panel">
+        <div class="panel-header">
+            <h3>图表控制</h3>
+            <button id="closePanel" class="close-btn">×</button>
+        </div>
+        <div class="panel-content">
+            <div class="control-group">
+                <label>图表类型:</label>
+                <div class="button-group">
+                    <button class="type-btn active" data-type="line">折线图</button>
+                    <button class="type-btn" data-type="bar">柱状图</button>
+                    <button class="type-btn" data-type="pie">饼图</button>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>数据操作:</label>
+                <div class="button-group">
+                    <button id="randomData" class="action-btn">随机数据</button>
+                    <button id="updateChart" class="action-btn">更新图表</button>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>页面导航:</label>
+                <div class="button-group">
+                    <button class="nav-btn" onclick="goToListPage()">返回数据列表</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 选中的数据项信息 -->
+    <div id="selectedItemInfo" class="selected-item-info" style="display: none;">
+        <h3>当前查看的数据项: <span id="currentDataItem">未选择</span></h3>
+        <p id="dataDescription">请从数据列表页面选择要查看的数据项</p>
+    </div>
+    
+    <!-- 图表错误提示容器 -->
+    <div id="chartError" class="chart-error" style="display: none;">
+        <div class="error-content">
+            <h3>图表加载失败</h3>
+            <p>可能的原因：</p>
+            <ul>
+                <li>网络连接问题</li>
+                <li>Chart.js库加载失败</li>
+                <li>浏览器兼容性问题</li>
+            </ul>
+            <button id="retryChart" class="retry-btn">重新加载</button>
+        </div>
+    </div>
+    
+    <div class="chart-container">
+        <canvas id="chartCanvas"></canvas>
+    </div>
+
+    <script>
+        class HistoryChartApp {
+            constructor() {
+                this.chart = null;
+                this.currentType = 'line';
+                this.currentData = { values: [], labels: [] };
+                this.controlPanel = null;
+                this.chartError = null;
+                this.ueStatus = null;
+                this.selectedDataItem = null;
+                this.init();
+            }
+
+            async init() {
+                if (typeof Chart === 'undefined') {
+                    this.showChartError('Chart.js库加载失败，请检查网络连接');
+                    return;
+                }
+                
+                try {
+                    await this.loadConfig();
+                    this.createChart();
+                    this.setupControls();
+                    this.setupUEConnection();
+                    
+                    // 设置全局实例供UE调用
+                    if (typeof window.setChartAppInstance === 'function') {
+                        window.setChartAppInstance(this);
+                    }
+                } catch (error) {
+                    this.showChartError('图表初始化失败: ' + error.message);
+                }
+            }
+
+            setupUEConnection() {
+                this.ueStatus = document.getElementById('ueStatus');
+                if (this.ueStatus) {
+                    this.ueStatus.style.display = 'block';
+                    this.updateUEStatus('已连接', new Date().toLocaleTimeString());
+                }
+            }
+
+            updateUEStatus(status, lastUpdate) {
+                if (this.ueStatus) {
+                    const statusElement = document.getElementById('ueConnectionStatus');
+                    const timeElement = document.getElementById('lastUpdateTime');
+                    
+                    if (statusElement) statusElement.textContent = status;
+                    if (timeElement) timeElement.textContent = lastUpdate;
+                }
+            }
+
+            async loadConfig() {
+                this.currentType = 'line';
+                this.currentData = {
+                    values: [65, 59, 80, 81, 56, 55],
+                    labels: ['数据1', '数据2', '数据3', '数据4', '数据5', '数据6']
+                };
+            }
+
+            createChart() {
+                try {
+                    const canvas = document.getElementById('chartCanvas');
+                    if (!canvas) throw new Error('找不到图表画布元素');
+                    
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) throw new Error('无法获取画布上下文');
+                    
+                    const chartConfig = {
+                        type: this.currentType,
+                        data: {
+                            labels: this.currentData.labels,
+                            datasets: [{
+                                label: this.selectedDataItem || '历史数据',
+                                data: this.currentData.values,
+                                backgroundColor: this.getBackgroundColors(),
+                                borderColor: '#667eea',
+                                borderWidth: 2,
+                                fill: this.currentType === 'line'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: true },
+                                title: {
+                                    display: true,
+                                    text: this.selectedDataItem ? `${this.selectedDataItem} - 历史数据` : '历史数据图表',
+                                    font: { size: 18 }
+                                }
+                            }
+                        }
+                    };
+
+                    if (this.chart) this.chart.destroy();
+                    this.chart = new Chart(ctx, chartConfig);
+                    this.hideChartError();
+                    
+                } catch (error) {
+                    this.showChartError('图表创建失败: ' + error.message);
+                }
+            }
+
+            // 从UE更新历史数据
+            updateHistoryDataFromUE(historyData) {
+                console.log('收到UE历史数据:', historyData);
+                
+                try {
+                    if (historyData.values && Array.isArray(historyData.values)) {
+                        this.currentData = {
+                            values: historyData.values,
+                            labels: historyData.labels || historyData.values.map((_, i) => `时间点${i+1}`)
+                        };
+                    } else if (Array.isArray(historyData)) {
+                        this.currentData = {
+                            values: historyData,
+                            labels: historyData.map((_, i) => `时间点${i+1}`)
+                        };
+                    }
+                    
+                    this.updateChart();
+                    this.updateUEStatus('已连接', new Date().toLocaleTimeString());
+                    
+                } catch (error) {
+                    console.error('处理历史数据时发生错误:', error);
+                    this.showChartError('历史数据更新失败: ' + error.message);
+                }
+            }
+
+            // 设置选中的数据项
+            setSelectedDataItem(dataItemName) {
+                this.selectedDataItem = dataItemName;
+                const infoElement = document.getElementById('selectedItemInfo');
+                const nameElement = document.getElementById('currentDataItem');
+                const descElement = document.getElementById('dataDescription');
+                
+                if (infoElement) infoElement.style.display = 'block';
+                if (nameElement) nameElement.textContent = dataItemName;
+                if (descElement) descElement.textContent = `正在显示 ${dataItemName} 的历史数据图表`;
+                
+                console.log('设置选中的数据项:', dataItemName);
+            }
+
+            updateChart() {
+                if (this.chart) {
+                    this.chart.data.labels = this.currentData.labels;
+                    this.chart.data.datasets[0].data = this.currentData.values;
+                    this.chart.data.datasets[0].label = this.selectedDataItem || '历史数据';
+                    this.chart.update();
+                }
+            }
+
+            getBackgroundColors() {
+                if (this.currentType === 'line') {
+                    return 'rgba(102, 126, 234, 0.1)';
+                }
+                const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
+                return this.currentData.values.map((_, i) => colors[i % colors.length]);
+            }
+
+            setupControls() {
+                // 控制面板设置（与原有逻辑相同）
+                this.controlPanel = document.getElementById('controlPanel');
+                const toggleBtn = document.getElementById('controlToggle');
+                const closeBtn = document.getElementById('closePanel');
+                
+                toggleBtn.addEventListener('click', () => {
+                    this.controlPanel.classList.toggle('active');
+                });
+                
+                closeBtn.addEventListener('click', () => {
+                    this.controlPanel.classList.remove('active');
+                });
+
+                const typeButtons = document.querySelectorAll('.type-btn');
+                typeButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const type = btn.dataset.type;
+                        this.switchChartType(type);
+                    });
+                });
+
+                document.getElementById('randomData').addEventListener('click', () => {
+                    this.updateData();
+                });
+
+                document.getElementById('updateChart').addEventListener('click', () => {
+                    this.updateChart();
+                });
+            }
+
+            async switchChartType(type) {
+                this.currentType = type;
+                this.updateTypeButtons();
+                this.createChart();
+                this.updateUEStatus('已连接', new Date().toLocaleTimeString());
+            }
+
+            updateTypeButtons() {
+                const typeButtons = document.querySelectorAll('.type-btn');
+                typeButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.type === this.currentType) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            showChartError(message) {
+                // 错误处理逻辑（与原有相同）
+                if (!this.chartError) {
+                    this.chartError = document.getElementById('chartError');
+                    const retryBtn = document.getElementById('retryChart');
+                    if (retryBtn) retryBtn.onclick = () => location.reload();
+                }
+                this.chartError.style.display = 'flex';
+            }
+
+            hideChartError() {
+                if (this.chartError) this.chartError.style.display = 'none';
+            }
+        }
+
+        // 导航函数
+        function goToListPage() {
+            window.location.href = 'data_list.html';
+        }
+
+        // UE接口方法
+        ue.interface.UpdateChartData = function(data) {
+            console.log('收到UE图表数据更新:', data);
+            
+            if (window.chartAppInstance && window.chartAppInstance.updateHistoryDataFromUE) {
+                window.chartAppInstance.updateHistoryDataFromUE(data);
+                return { success: true, message: '图表数据更新成功' };
+            } else {
+                return { success: false, message: '图表应用未初始化' };
+            }
+        };
+
+        ue.interface.SetSelectedDataItem = function(dataItemName) {
+            console.log('设置选中的数据项:', dataItemName);
+            
+            if (window.chartAppInstance && window.chartAppInstance.setSelectedDataItem) {
+                window.chartAppInstance.setSelectedDataItem(dataItemName);
+                return { success: true, message: '数据项设置成功' };
+            } else {
+                return { success: false, message: '图表应用未初始化' };
+            }
+        };
+
+        // 设置全局实例
+        window.setChartAppInstance = function(instance) {
+            window.chartAppInstance = instance;
+        };
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            window.chartAppInstance = new HistoryChartApp();
+        });
+    </script>
+</body>
+</html>
