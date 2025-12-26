@@ -375,6 +375,92 @@
             console.log("测试数据 - 名字映射:", nameToDisplayMap);
             console.log("测试数据 - 数据映射:", nameToDataMap);
         }
+        // 检测值是否为可图表化的数值类型（排除时间戳）
+        function isChartableValue(value) {
+            if (value === null || value === undefined) return false;
+            
+            // 检查是否为数值类型
+            if (typeof value === 'number') {
+                // 检测是否为时间戳（通常时间戳是很大的数字）
+                const currentTimestamp = Date.now();
+                const oneYearInMs = 365 * 24 * 60 * 60 * 1000; // 一年的毫秒数
+                
+                // 如果数值接近当前时间戳（在一年范围内），则认为是时间戳
+                if (Math.abs(value - currentTimestamp) < oneYearInMs) {
+                    return false; // 时间戳不可图表化
+                }
+                
+                // 如果数值非常大（可能是秒级时间戳）
+                if (value > 1000000000 && value < 2000000000) {
+                    return false; // 秒级时间戳不可图表化
+                }
+                
+                return true; // 其他数值可图表化
+            }
+            
+            // 检查是否为可转换为数值的字符串
+            if (typeof value === 'string') {
+                // 尝试转换为数值
+                const numValue = Number(value);
+                if (isNaN(numValue) || !isFinite(numValue)) {
+                    return false; // 无法转换为有效数值
+                }
+                
+                // 检测字符串格式的时间戳
+                const currentTimestamp = Date.now();
+                const oneYearInMs = 365 * 24 * 60 * 60 * 1000;
+                
+                // 如果转换后的数值接近当前时间戳
+                if (Math.abs(numValue - currentTimestamp) < oneYearInMs) {
+                    return false; // 时间戳不可图表化
+                }
+                
+                // 如果数值非常大（可能是秒级时间戳）
+                if (numValue > 1000000000 && numValue < 2000000000) {
+                    return false; // 秒级时间戳不可图表化
+                }
+                
+                return true; // 其他可转换为数值的字符串可图表化
+            }
+            
+            // 其他类型（布尔值、对象等）不可图表化
+            return false;
+        }
+        
+        // 检测是否为时间戳
+        function isTimestamp(value) {
+            if (value === null || value === undefined) return false;
+            
+            const currentTimestamp = Date.now();
+            const oneYearInMs = 365 * 24 * 60 * 60 * 1000;
+            
+            if (typeof value === 'number') {
+                // 检测毫秒级时间戳
+                if (Math.abs(value - currentTimestamp) < oneYearInMs) {
+                    return true;
+                }
+                // 检测秒级时间戳
+                if (value > 1000000000 && value < 2000000000) {
+                    return true;
+                }
+            }
+            
+            if (typeof value === 'string') {
+                const numValue = Number(value);
+                if (!isNaN(numValue) && isFinite(numValue)) {
+                    // 检测毫秒级时间戳
+                    if (Math.abs(numValue - currentTimestamp) < oneYearInMs) {
+                        return true;
+                    }
+                    // 检测秒级时间戳
+                    if (numValue > 1000000000 && numValue < 2000000000) {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        }
 
         // 更新数据表格 - 处理两个映射数据
         function updateDataTable(nameToDisplayMap, nameToDataMap) {
