@@ -7,74 +7,228 @@
     <link rel="stylesheet" href="styles/chart.css">
     <style>
         .data-list-container {
-            width: 90vw;
-            max-width: 1200px;
-            margin: 20px auto;
+            width: 95vw;
+            max-width: 100%;
+            margin: 10px auto;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px); /* 占据屏幕高度，留出边距 */
+            max-height: 90vh; /* 最大高度限制 */
         }
 
         .page-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
             color: #333;
+            flex-shrink: 0; /* 标题不收缩 */
+        }
+
+        .page-header h1 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .page-header p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .table-container {
+            flex: 1; /* 占据剩余空间 */
+            overflow: hidden; /* 隐藏内部溢出 */
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .table-header {
+            flex-shrink: 0; /* 表头不收缩 */
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            padding: 10px;
+            font-size: 11px;
+        }
+
+        .table-header-row {
+            display: flex;
+            width: 100%;
+        }
+
+        .table-header-cell {
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .table-header-cell:nth-child(1) {
+            width: 45%; /* 数据名称列 */
+        }
+
+        .table-header-cell:nth-child(2) {
+            width: 30%; /* 当前值列 */
+            text-align: center;
+        }
+
+        .table-header-cell:nth-child(3) {
+            width: 25%; /* 操作列 */
+            text-align: right;
+        }
+
+        .table-body {
+            flex: 1; /* 占据剩余空间 */
+            overflow-y: auto; /* 垂直滚动 */
+            overflow-x: hidden; /* 水平不滚动 */
+            max-height: calc(100vh - 150px); /* 最大高度限制 */
         }
 
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
-            table-layout: fixed; /* 固定表格布局 */
+            table-layout: fixed;
+            font-size: 12px;
         }
 
         .data-table th, .data-table td {
-            padding: 12px 15px;
+            padding: 8px 10px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
+            line-height: 1.2;
         }
 
-        /* 设置列宽比例 - 操作列在最右边 */
+        /* 设置列宽比例 */
         .data-table th:nth-child(1), .data-table td:nth-child(1) {
-            width: 40%; /* 数据名称列 */
+            width: 45%; /* 数据名称列 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .data-table th:nth-child(2), .data-table td:nth-child(2) {
-            width: 40%; /* 当前值列 */
-            text-align: left;
+            width: 30%; /* 当前值列 */
+            text-align: center;
+            font-weight: 600;
+            color: #2c3e50;
         }
 
         .data-table th:nth-child(3), .data-table td:nth-child(3) {
-            width: 20%; /* 操作列 - 在最右边 */
-            text-align: right; /* 按钮靠右对齐 */
+            width: 25%; /* 操作列 */
+            text-align: right;
         }
 
         .data-table th {
             background: #667eea;
             color: white;
             font-weight: 600;
+            padding: 10px;
+            font-size: 11px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .data-table tr:hover {
-            background: #f5f7ff;
+            background: #f8f9ff;
         }
 
         .select-btn {
             background: #4facfe;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
+            padding: 6px 12px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s ease;
-            float: right; /* 按钮向右浮动 */
+            font-size: 10px;
+            transition: all 0.2s ease;
+            float: right;
+            min-width: 60px;
         }
 
         .select-btn:hover {
             background: #00c6ff;
             transform: translateY(-1px);
+        }
+
+        /* 滚动条样式优化 */
+        .table-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .table-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .table-body::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .table-body::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        .ue-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 10px;
+            z-index: 1001;
+        }
+
+        /* 小屏幕优化 */
+        @media (max-width: 480px) {
+            .data-list-container {
+                width: 98vw;
+                margin: 5px auto;
+                padding: 10px;
+                height: calc(100vh - 20px);
+            }
+            
+            .table-body {
+                max-height: calc(100vh - 120px);
+            }
+            
+            .data-table th, .data-table td {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+            
+            .data-table th:nth-child(1), .data-table td:nth-child(1) {
+                width: 40%;
+            }
+            
+            .data-table th:nth-child(2), .data-table td:nth-child(2) {
+                width: 30%;
+            }
+            
+            .data-table th:nth-child(3), .data-table td:nth-child(3) {
+                width: 30%;
+            }
+            
+            .select-btn {
+                padding: 4px 8px;
+                font-size: 9px;
+                min-width: 50px;
+            }
+            
+            .page-header h1 {
+                font-size: 16px;
+            }
+            
+            .page-header p {
+                font-size: 11px;
+            }
         }
 
         .navigation {
@@ -126,21 +280,26 @@
     <div class="data-list-container">
         <div class="page-header">
             <h1>数据列表</h1>
-            <p>选择数据项查看历史图表</p>
+            <!-- <p>选择数据项查看历史图表</p> -->
         </div>
 
-        <table class="data-table" id="dataTable">
-            <thead>
-                <tr>
-                    <th>数据名称</th>
-                    <th>当前值</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody id="dataTableBody">
-                <!-- 数据将通过JavaScript动态填充 -->
-            </tbody>
-        </table>
+        <div class="table-container">
+            <div class="table-header">
+                <div class="table-header-row">
+                    <div class="table-header-cell">数据名称</div>
+                    <div class="table-header-cell">当前值</div>
+                    <div class="table-header-cell">操作</div>
+                </div>
+            </div>
+            
+            <div class="table-body" id="tableBody">
+                <table class="data-table" id="dataTable">
+                    <tbody id="dataTableBody">
+                        <!-- 数据将通过JavaScript动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script>
