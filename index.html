@@ -7,7 +7,74 @@
     <link rel="stylesheet" href="styles/chart.css">
     <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
     <script src="scripts/chart.umd.min.js"></script>
-
+    <!--Ue和前端通信JS代码-->
+    <script>
+        "object"!=typeof ue||"object"!=typeof ue.interface?("object"!=typeof ue&&(ue={}),ue.interface={},ue.interface.broadcast=function(e,t){if("string"==typeof e){var o=[e,""];void 0!==t&&(o[1]=t);var n=encodeURIComponent(JSON.stringify(o));"object"==typeof history&&"function"==typeof history.pushState?(history.pushState({},"","#"+n),history.pushState({},"","#"+encodeURIComponent("[]"))):(document.location.hash=n,document.location.hash=encodeURIComponent("[]"))}}):function(e){ue.interface={},ue.interface.broadcast=function(t,o){"string"==typeof t&&(void 0!==o?e.broadcast(t,JSON.stringify(o)):e.broadcast(t,""))}}(ue.interface),(window.ue5=ue.interface.broadcast);
+    </script>
+ <!-- UE到前端的数据更新方法 -->
+    <script>
+        // 全局图表应用实例
+        let chartAppInstance = null;
+        
+        // UE调用此方法来更新图表数据
+        ue.interface.UpdateChartData = function(data) {
+            console.log('收到UE数据更新:', data);
+            
+            try {
+                // 解析数据
+                const chartData = typeof data === 'string' ? JSON.parse(data) : data;
+                
+                if (chartAppInstance && chartAppInstance.updateDataFromUE) {
+                    // 调用图表应用的更新方法
+                    chartAppInstance.updateDataFromUE(chartData);
+                    console.log('图表数据更新成功');
+                    
+                    // 返回成功响应给UE
+                    return { success: true, message: '数据更新成功' };
+                } else {
+                    console.error('图表应用未初始化或缺少更新方法');
+                    return { success: false, message: '图表应用未初始化' };
+                }
+            } catch (error) {
+                console.error('处理UE数据时发生错误:', error);
+                return { success: false, message: '数据处理错误: ' + error.message };
+            }
+        };
+        
+        // UE调用此方法来切换图表类型
+        ue.interface.SwitchChartType = function(type) {
+            console.log('收到UE图表类型切换请求:', type);
+            
+            if (chartAppInstance && chartAppInstance.switchChartType) {
+                chartAppInstance.switchChartType(type);
+                console.log('图表类型切换成功');
+                return { success: true, message: '图表类型切换成功' };
+            } else {
+                console.error('图表应用未初始化或缺少切换方法');
+                return { success: false, message: '图表应用未初始化' };
+            }
+        };
+        
+        // UE调用此方法来获取当前图表状态
+        ue.interface.GetChartStatus = function() {
+            if (chartAppInstance) {
+                return {
+                    success: true,
+                    currentType: chartAppInstance.currentType,
+                    dataCount: chartAppInstance.currentData ? chartAppInstance.currentData.values.length : 0,
+                    labels: chartAppInstance.currentData ? chartAppInstance.currentData.labels : []
+                };
+            } else {
+                return { success: false, message: '图表应用未初始化' };
+            }
+        };
+        
+        // 设置全局实例的方法
+        window.setChartAppInstance = function(instance) {
+            chartAppInstance = instance;
+            console.log('图表应用实例已设置');
+        };
+    </script>
 </head>
 <body>
     <!-- 控制面板切换按钮 -->

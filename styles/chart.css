@@ -240,3 +240,77 @@ body {
     color: #666;
     font-size: 18px;
 }
+
+/* UE状态显示区域 */
+.ue-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12px;
+    z-index: 1001;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 200px;
+}
+
+.ue-status div {
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.ue-status div:last-child {
+    margin-bottom: 0;
+}
+
+.ue-status span {
+    font-weight: 600;
+    color: #4facfe;
+}
+
+/* UE连接状态指示器 */
+.ue-status::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e74c3c;
+    animation: pulse 2s infinite;
+}
+
+.ue-status[data-status="connected"]::before {
+    background: #2ecc71;
+    animation: pulse-connected 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+
+@keyframes pulse-connected {
+    0% { opacity: 0.7; box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+    70% { opacity: 1; box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+    100% { opacity: 0.7; box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+}
+
+/* 响应式设计 - UE状态 */
+@media (max-width: 768px) {
+    .ue-status {
+        top: 10px;
+        right: 10px;
+        padding: 10px;
+        font-size: 11px;
+        min-width: 180px;
+    }
+}

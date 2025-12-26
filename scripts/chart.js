@@ -2,9 +2,10 @@ class ChartApp {
     constructor() {
         this.chart = null;
         this.currentType = 'line';
-        this.currentData = { values: [], labels: [] }; // 修改为对象结构
+        this.currentData = { values: [], labels: [] };
         this.controlPanel = null;
         this.chartError = null;
+        this.ueStatus = null;
         this.init();
     }
 
@@ -19,49 +20,142 @@ class ChartApp {
             await this.loadConfig();
             this.createChart();
             this.setupControls();
+            this.setupUEConnection();
+            
+            // 设置全局实例供UE调用
+            if (typeof window.setChartAppInstance === 'function') {
+                window.setChartAppInstance(this);
+            }
         } catch (error) {
             this.showChartError('图表初始化失败: ' + error.message);
         }
     }
 
+    // 设置UE连接状态显示
+    setupUEConnection() {
+        this.ueStatus = document.getElementById('ueStatus');
+        if (this.ueStatus) {
+            this.ueStatus.style.display = 'block';
+            this.updateUEStatus('已连接', new Date().toLocaleTimeString());
+        }
+        
+        // 检查UE接口是否可用
+        if (typeof ue !== 'undefined' && typeof ue.interface !== 'undefined') {
+            console.log('UE接口已连接');
+        } else {
+            console.warn('UE接口未连接，将使用本地模式');
+            this.updateUEStatus('未连接', '-');
+        }
+    }
+
+    // 更新UE状态显示
+    updateUEStatus(status, lastUpdate) {
+        if (this.ueStatus) {
+            const statusElement = document.getElementById('ueConnectionStatus');
+            const timeElement = document.getElementById('lastUpdateTime');
+            
+            if (statusElement) statusElement.textContent = status;
+            if (timeElement) timeElement.textContent = lastUpdate;
+        }
+    }
+
+    // 从UE更新数据的方法
+    updateDataFromUE(ueData) {
+        console.log('从UE接收数据:', ueData);
+        
+        try {
+            // 支持多种数据格式
+            if (ueData.values && Array.isArray(ueData.values)) {
+                // 标准格式：包含values和labels的对象
+                this.currentData = {
+                    values: ueData.values,
+                    labels: ueData.labels || ueData.values.map((_, index) => `数据${index + 1}`)
+                };
+            } else if (Array.isArray(ueData)) {
+                // 简单数组格式
+                this.currentData = {
+                    values: ueData,
+                    labels: ueData.map((_, index) => `数据${index + 1}`)
+                };
+            } else if (ueData.data && Array.isArray(ueData.data)) {
+                // 嵌套数据格式
+                this.currentData = {
+                    values: ueData.data,
+                    labels: ueData.labels || ueData.data.map((_, index) => `数据${index + 1}`)
+                };
+            } else {
+                throw new Error('不支持的数据格式');
+            }
+            
+            // 更新图表
+            this.updateChart();
+            
+            // 更新状态显示
+            this.updateUEStatus('已连接', new Date().toLocaleTimeString());
+            
+            console.log('UE数据更新成功，数据点数量:', this.currentData.values.length);
+            
+        } catch (error) {
+            console.error('处理UE数据时发生错误:', error);
+            this.showChartError('UE数据更新失败: ' + error.message);
+        }
+    }
+
+    // 修改switchChartType方法，移除HTTP请求
+    async switchChartType(type) {
+        try {
+            // 直接切换图表类型
+            this.currentType = type;
+            this.updateTypeButtons();
+            this.createChart();
+            this.updateUEStatus('已连接', new Date().toLocaleTimeString());
+            
+        } catch (error) {
+            console.error('切换图表类型失败:', error);
+            this.showChartError('图表类型切换失败: ' + error.message);
+        }
+    }
+
+    // 修改updateData方法，移除HTTP请求
+    async updateData(ueData) {
+        // 如果提供了UE数据，直接使用
+        if (ueData) {
+            this.updateDataFromUE(ueData);
+            return;
+        }
+        
+        // 使用本地随机数据生成逻辑
+        try {
+            // 生成随机数据
+            const dataCount = 6;
+            const randomValues = Array.from({length: dataCount}, () => Math.floor(Math.random() * 100));
+            const randomLabels = randomValues.map((_, index) => `数据${index + 1}`);
+            
+            this.currentData = {
+                values: randomValues,
+                labels: randomLabels
+            };
+            
+            this.updateChart();
+            
+        } catch (error) {
+            console.error('更新数据失败:', error);
+            this.showChartError('数据更新失败: ' + error.message);
+        }
+    }
+
+    // 修改loadConfig方法，移除HTTP请求
     async loadConfig() {
         try {
-            const response = await fetch('/api/config');
-            if (!response.ok) {
-                throw new Error('网络请求失败: ' + response.status);
-            }
-            const result = await response.json();
+            // 使用本地默认配置
+            this.currentType = 'line';
+            this.currentData = {
+                values: [65, 59, 80, 81, 56, 55],
+                labels: ['数据1', '数据2', '数据3', '数据4', '数据5', '数据6']
+            };
             
-            if (result.success) {
-                this.currentType = result.config.chart_type;
-                // 处理新的数据结构
-                if (result.config.data && typeof result.config.data === 'object') {
-                    if (Array.isArray(result.config.data)) {
-                        // 向后兼容：如果是数组，转换为新结构
-                        this.currentData = {
-                            values: result.config.data,
-                            labels: result.config.data.map((_, index) => `数据${index + 1}`)
-                        };
-                    } else {
-                        // 新结构：包含values和labels的对象
-                        this.currentData = {
-                            values: result.config.data.values || [],
-                            labels: result.config.data.labels || []
-                        };
-                    }
-                } else {
-                    // 默认数据
-                    this.currentData = {
-                        values: [65, 59, 80, 81, 56, 55],
-                        labels: ['数据1', '数据2', '数据3', '数据4', '数据5', '数据6']
-                    };
-                }
-            } else {
-                throw new Error('配置加载失败');
-            }
         } catch (error) {
             console.error('加载配置失败:', error);
-            // 使用默认数据
             this.currentData = {
                 values: [65, 59, 80, 81, 56, 55],
                 labels: ['数据1', '数据2', '数据3', '数据4', '数据5', '数据6']
@@ -105,7 +199,7 @@ class ChartApp {
                         },
                         title: {
                             display: true,
-                            text: '数据图表展示',
+                            text: '历史数据',
                             font: {
                                 size: 18
                             }
@@ -132,20 +226,29 @@ class ChartApp {
             }
 
             this.chart = new Chart(ctx, chartConfig);
-            this.hideChartError(); // 成功创建图表后隐藏错误提示
+            this.hideChartError();
             
         } catch (error) {
             this.showChartError('图表创建失败: ' + error.message);
         }
     }
 
-    // 显示图表错误提示
+    updateChart() {
+        if (this.chart) {
+            this.chart.data.labels = this.currentData.labels.length > 0 ? 
+                                   this.currentData.labels : 
+                                   this.currentData.values.map((_, index) => `数据${index + 1}`);
+            this.chart.data.datasets[0].data = this.currentData.values;
+            this.chart.update();
+        }
+    }
+
+    // 其他原有方法保持不变...
     showChartError(message) {
         if (!this.chartError) {
             this.chartError = document.getElementById('chartError');
             if (!this.chartError) return;
             
-            // 添加重试按钮事件
             const retryBtn = document.getElementById('retryChart');
             if (retryBtn) {
                 retryBtn.onclick = () => {
@@ -154,7 +257,6 @@ class ChartApp {
             }
         }
         
-        // 更新错误消息
         const errorContent = this.chartError.querySelector('.error-content');
         if (errorContent) {
             const h3 = errorContent.querySelector('h3');
@@ -166,20 +268,17 @@ class ChartApp {
         
         this.chartError.style.display = 'flex';
         
-        // 隐藏图表容器
         const chartContainer = document.querySelector('.chart-container');
         if (chartContainer) {
             chartContainer.style.display = 'none';
         }
     }
 
-    // 隐藏图表错误提示
     hideChartError() {
         if (this.chartError) {
             this.chartError.style.display = 'none';
         }
         
-        // 显示图表容器
         const chartContainer = document.querySelector('.chart-container');
         if (chartContainer) {
             chartContainer.style.display = 'block';
@@ -200,92 +299,13 @@ class ChartApp {
         return this.currentData.values.map((_, index) => colors[index % colors.length]);
     }
 
-    async updateData() {
-        try {
-            const response = await fetch('/api/random', { method: 'POST' });
-            if (!response.ok) {
-                throw new Error('网络请求失败: ' + response.status);
-            }
-            const result = await response.json();
-            
-            if (result.success) {
-                // 处理新的数据结构
-                if (result.data && typeof result.data === 'object') {
-                    if (Array.isArray(result.data)) {
-                        // 向后兼容
-                        this.currentData = {
-                            values: result.data,
-                            labels: result.data.map((_, index) => `数据${index + 1}`)
-                        };
-                    } else {
-                        // 新结构
-                        this.currentData = {
-                            values: result.data.values || [],
-                            labels: result.data.labels || []
-                        };
-                    }
-                } else {
-                    throw new Error('返回数据格式错误');
-                }
-                this.updateChart();
-            } else {
-                throw new Error('数据更新失败');
-            }
-        } catch (error) {
-            console.error('更新数据失败:', error);
-            this.showChartError('数据更新失败: ' + error.message);
-        }
-    }
-
-    // 添加updateChart方法
-    updateChart() {
-        if (this.chart) {
-            this.chart.data.labels = this.currentData.labels.length > 0 ? 
-                                   this.currentData.labels : 
-                                   this.currentData.values.map((_, index) => `数据${index + 1}`);
-            this.chart.data.datasets[0].data = this.currentData.values;
-            this.chart.update();
-        }
-    }
-
-    async switchChartType(type) {
-        try {
-            const response = await fetch('/api/switch', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ type: type })
-            });
-            
-            if (!response.ok) {
-                throw new Error('网络请求失败: ' + response.status);
-            }
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                this.currentType = result.type;
-                this.updateTypeButtons();
-                this.createChart();
-            } else {
-                throw new Error('图表类型切换失败');
-            }
-        } catch (error) {
-            console.error('切换图表类型失败:', error);
-            this.showChartError('图表类型切换失败: ' + error.message);
-        }
-    }
-
     setupControls() {
-        // 控制面板元素
         this.controlPanel = document.getElementById('controlPanel');
         const toggleBtn = document.getElementById('controlToggle');
         const closeBtn = document.getElementById('closePanel');
         const randomBtn = document.getElementById('randomData');
         const updateBtn = document.getElementById('updateChart');
         
-        // 切换控制面板显示/隐藏
         toggleBtn.addEventListener('click', () => {
             this.controlPanel.classList.toggle('active');
         });
@@ -294,7 +314,6 @@ class ChartApp {
             this.controlPanel.classList.remove('active');
         });
         
-        // 点击面板外部关闭面板
         document.addEventListener('click', (e) => {
             if (!this.controlPanel.contains(e.target) && 
                 !toggleBtn.contains(e.target) && 
@@ -303,7 +322,6 @@ class ChartApp {
             }
         });
         
-        // 图表类型按钮
         const typeButtons = document.querySelectorAll('.type-btn');
         typeButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -312,17 +330,14 @@ class ChartApp {
             });
         });
         
-        // 随机数据按钮
         randomBtn.addEventListener('click', () => {
             this.updateData();
         });
         
-        // 更新图表按钮
         updateBtn.addEventListener('click', () => {
             this.updateChart();
         });
         
-        // 初始化类型按钮状态
         this.updateTypeButtons();
     }
     
@@ -339,7 +354,6 @@ class ChartApp {
 
 // 页面加载完成后初始化应用
 document.addEventListener('DOMContentLoaded', () => {
-    // 添加全局错误处理
     window.addEventListener('error', (event) => {
         if (event.error && event.error.message.includes('Chart')) {
             console.error('全局图表错误:', event.error);
